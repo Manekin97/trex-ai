@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 // extract from chromium source code by @liuwayong
+var game;
+
 (function () {
     'use strict';
     /**
@@ -699,7 +701,6 @@
                 }
             }
         },
-
 
         /**
          * Process key up.
@@ -1509,6 +1510,9 @@
         this.jumpCount = 0;
         this.jumpspotX = 0;
 
+        // AI stuff
+        this.brain = new Brain(7, 5, 3);
+
         this.init();
     };
 
@@ -1615,6 +1619,27 @@
             this.update(0, Trex.status.WAITING);
         },
 
+        getClosestObstacle: function () {
+            let dinoXPos = this.xPos;
+            let currentMin = 10000;
+            let closestObstacle = {};
+
+            if (typeof game !== "undefined") {
+                game.horizon.obstacles.forEach(obstacle => {
+                    if (Math.abs(dinoXPos - obstacle.xPos) < currentMin) {
+                        currentMin = Math.abs(dinoXPos - obstacle.xPos);
+                        closestObstacle = obstacle;
+                    }
+                });
+            }
+
+            return { obstacle: closestObstacle, dist: currentMin };
+        },
+
+        getClosestPdY: function () {
+            //  nie wiem, czy on jest przeszkodą, potem napisze
+        },
+
         /**
          * Setter for the jump velocity.
          * The approriate drop velocity is also set.
@@ -1631,6 +1656,23 @@
          */
         update: function (deltaTime, opt_status) {
             this.timer += deltaTime;
+
+            // AI stuff
+            let closestObstacle = this.getClosestObstacle();
+
+            let input = tf.tensor2d(
+                [[closestObstacle.dist], //  Dystans do najbliższej przeszkody
+                [typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0],  //  wysokość najbliższej przeszkody
+                [typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size : 0],   //  szerokość najbliższej przeszkody
+                [typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0],  //  y pterodaktyla
+                [typeof game !== "undefined" ? game.currentSpeed : 0], // predkosc
+                [this.yPos],    //  Pozycja Y dinozaura
+                [0]], // odlegosc miedzy przeszkodami
+                [7, 1]
+            );
+
+            this.brain.nnetwork.predict(input).print();
+
 
             // Update the status.
             if (opt_status) {
@@ -2704,7 +2746,7 @@
 
 
 function onDocumentLoad() {
-    new Runner('.interstitial-wrapper');
+    game = new Runner('.interstitial-wrapper');
 }
 
 document.addEventListener('DOMContentLoaded', onDocumentLoad);
