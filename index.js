@@ -1626,7 +1626,7 @@ var game;
 
             if (typeof game !== "undefined") {
                 game.horizon.obstacles.forEach(obstacle => {
-                    if (Math.abs(dinoXPos - obstacle.xPos) < currentMin) {
+                    if (dinoXPos < obstacle.xPos && Math.abs(dinoXPos - obstacle.xPos) < currentMin) {
                         currentMin = Math.abs(dinoXPos - obstacle.xPos);
                         closestObstacle = obstacle;
                     }
@@ -1636,8 +1636,18 @@ var game;
             return { obstacle: closestObstacle, dist: currentMin };
         },
 
-        getClosestPdY: function () {
-            //  nie wiem, czy on jest przeszkodą, potem napisze
+        getDistanceBetweenObstacles: function (closestObstacle) {
+            let currentMin = 10000;
+
+            if (typeof game !== "undefined") {
+                game.horizon.obstacles.forEach(obstacle => {
+                    if (obstacle.xPos > closestObstacle.xPos && Math.abs(closestObstacle.xPos - obstacle.xPos) < currentMin) {
+                        currentMin = Math.abs(closestObstacle.xPos - obstacle.xPos);
+                    }
+                });
+            }
+
+            return currentMin;
         },
 
         /**
@@ -1661,13 +1671,13 @@ var game;
             let closestObstacle = this.getClosestObstacle();
 
             let input = tf.tensor2d(
-                [[closestObstacle.dist], //  Dystans do najbliższej przeszkody
-                [typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0],  //  wysokość najbliższej przeszkody
-                [typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size : 0],   //  szerokość najbliższej przeszkody
-                [typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0],  //  y pterodaktyla
-                [typeof game !== "undefined" ? game.currentSpeed : 0], // predkosc
-                [this.yPos],    //  Pozycja Y dinozaura
-                [0]], // odlegosc miedzy przeszkodami
+                [[closestObstacle.dist],    //  Dystans do najbliższej przeszkody
+                [typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0],  //  Wysokość najbliższej przeszkody
+                [typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size : 0],   //  Szerokość najbliższej przeszkody
+                [typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0], //  Pozycja Y Pterodaktyla
+                [typeof game !== "undefined" ? game.currentSpeed : 0],  //  Prędkość T-rexa
+                [this.yPos],    //  Pozycja Y T-rexa
+                [typeof closestObstacle.obstacle !== "undefined" ? this.getDistanceBetweenObstacles(closestObstacle.obstacle) : 0]],    //  Odległość między przeszkodami
                 [7, 1]
             );
 
