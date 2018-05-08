@@ -1670,19 +1670,44 @@ var game;
             // AI stuff
             let closestObstacle = this.getClosestObstacle();
 
-            let input = tf.tensor2d(
-                [[closestObstacle.dist],    //  Dystans do najbliższej przeszkody
-                [typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0],  //  Wysokość najbliższej przeszkody
-                [typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size : 0],   //  Szerokość najbliższej przeszkody
-                [typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0], //  Pozycja Y Pterodaktyla
-                [typeof game !== "undefined" ? game.currentSpeed : 0],  //  Prędkość T-rexa
-                [this.yPos],    //  Pozycja Y T-rexa
-                [typeof closestObstacle.obstacle !== "undefined" ? this.getDistanceBetweenObstacles(closestObstacle.obstacle) : 0]],    //  Odległość między przeszkodami
-                [7, 1]
-            );
 
-            this.brain.nnetwork.predict(input).print();
+            tf.tidy(() => {
+                let input = tf.tensor2d(
+                    [[closestObstacle.dist],    //  Dystans do najbliższej przeszkody
+                    [typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0],  //  Wysokość najbliższej przeszkody
+                    [typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size : 0],   //  Szerokość najbliższej przeszkody
+                    [typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0], //  Pozycja Y Pterodaktyla
+                    [typeof game !== "undefined" ? game.currentSpeed : 0],  //  Prędkość T-rexa
+                    [this.yPos],    //  Pozycja Y T-rexa
+                    [typeof closestObstacle.obstacle !== "undefined" ? this.getDistanceBetweenObstacles(closestObstacle.obstacle) : 0]],    //  Odległość między przeszkodami
+                    [7, 1]
+                );
 
+                let prediction = this.brain.nnetwork.predict(input);
+                prediction.print();
+
+                prediction.data().then(function (resposne) {
+                    // test skakania
+                    if (resposne[0] > 0.5) {
+                        var e = new Event("keydown");
+                        e.key = " ";
+                        e.keyCode = e.key.charCodeAt(0);
+                        e.which = e.keyCode;
+                        document.dispatchEvent(e);
+
+
+                        setTimeout(function () {
+                            e = new Event("keydown");
+                            e.key = " ";
+                            e.keyCode = e.key.charCodeAt(0);
+                            e.which = e.keyCode;
+                            document.dispatchEvent(e);
+                        },
+                            50
+                        );
+                    }
+                });
+            });
 
             // Update the status.
             if (opt_status) {
