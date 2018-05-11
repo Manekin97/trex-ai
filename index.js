@@ -769,6 +769,7 @@ var game;
             this.playSound(this.soundFx.HIT);
             vibrate(200);
 
+
             this.stop();
             this.crashed = true;
             this.distanceMeter.acheivement = false;
@@ -792,6 +793,8 @@ var game;
 
             // Reset the time clock.
             this.time = getTimeStamp();
+
+            this.restart();
         },
 
         stop: function () {
@@ -1670,24 +1673,23 @@ var game;
             // AI stuff
             let closestObstacle = this.getClosestObstacle();
 
-
             tf.tidy(() => {
-                let input = tf.tensor2d(
-                    [[closestObstacle.dist],    //  Dystans do najbliższej przeszkody
-                    [typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0],  //  Wysokość najbliższej przeszkody
-                    [typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size : 0],   //  Szerokość najbliższej przeszkody
-                    [typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0], //  Pozycja Y Pterodaktyla
-                    [typeof game !== "undefined" ? game.currentSpeed : 0],  //  Prędkość T-rexa
-                    [this.yPos],    //  Pozycja Y T-rexa
-                    [typeof closestObstacle.obstacle !== "undefined" ? this.getDistanceBetweenObstacles(closestObstacle.obstacle) : 0]],    //  Odległość między przeszkodami
-                    [7, 1]
+                let input = tf.tensor2d([
+                    [closestObstacle.dist,  //  Dystans do najbliższej przeszkody
+                    typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0,    //  Wysokość najbliższej przeszkody
+                    typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size : 0, //  Szerokość najbliższej przeszkody
+                    typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0,   //  Pozycja Y Pterodaktyla
+                    typeof game !== "undefined" ? game.currentSpeed : 0,    //  Prędkość T-rexa
+                    this.yPos,  //  Pozycja Y T-rexa
+                    typeof closestObstacle.obstacle !== "undefined" ? this.getDistanceBetweenObstacles(closestObstacle.obstacle) : 0]   //  Odległość między przeszkodami
+                ]
                 );
 
                 let prediction = this.brain.nnetwork.predict(input);
                 prediction.print();
 
                 prediction.data().then(function (resposne) {
-                    // test skakania
+                    // Mały skok
                     if (resposne[0] > 0.5) {
                         var e = new Event("keydown");
                         e.key = " ";
@@ -1703,9 +1705,48 @@ var game;
                             e.which = e.keyCode;
                             document.dispatchEvent(e);
                         },
+                            10
+                        );
+                    }
+
+                    // duży skok
+                    if (resposne[1] > 0.5) {
+                        var e = new Event("keydown");
+                        e.key = " ";
+                        e.keyCode = e.key.charCodeAt(0);
+                        e.which = e.keyCode;
+                        document.dispatchEvent(e);
+
+
+                        setTimeout(function () {
+                            e = new Event("keydown");
+                            e.key = " ";
+                            e.keyCode = e.key.charCodeAt(0);
+                            e.which = e.keyCode;
+                            document.dispatchEvent(e);
+                        },
+                            500
+                        );
+                    }
+
+                    // duck
+                    if (resposne[2] > 0.5) {
+                        var e = new Event("keydown");
+                        e.keyCode = 40;
+                        e.which = e.keyCode;
+                        document.dispatchEvent(e);
+
+
+                        setTimeout(function () {
+                            e = new Event("keydown");
+                            e.keyCode = 40;
+                            e.which = e.keyCode;
+                            document.dispatchEvent(e);
+                        },
                             50
                         );
                     }
+
                 });
             });
 
