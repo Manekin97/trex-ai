@@ -3,6 +3,13 @@
 // found in the LICENSE file.
 // extract from chromium source code by @liuwayong
 var game;
+var checkTime = 0;
+
+AI_config = {
+    POPULATION_SIZE: 10,
+    MUTATION_RATE: 0.01,
+    LEARNING_RATE: 1    //  Nie wiem, czy będe tego używał
+};
 
 (function () {
     'use strict';
@@ -795,6 +802,8 @@ var game;
             this.time = getTimeStamp();
 
             this.restart();
+            this.tRex.brain.nnetwork = neataptic.Network.crossOver(this.tRex.brain.nnetwork, this.tRex.brain.nnetwork);
+            this.tRex.brain.nnetwork.mutate(neataptic.methods.mutation.MOD_WEIGHT);
         },
 
         stop: function () {
@@ -1670,86 +1679,6 @@ var game;
         update: function (deltaTime, opt_status) {
             this.timer += deltaTime;
 
-            // AI stuff
-            let closestObstacle = this.getClosestObstacle();
-
-            tf.tidy(() => {
-                let input = tf.tensor2d([
-                    [closestObstacle.dist,  //  Dystans do najbliższej przeszkody
-                    typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0,    //  Wysokość najbliższej przeszkody
-                    typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size : 0, //  Szerokość najbliższej przeszkody
-                    typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0,   //  Pozycja Y Pterodaktyla
-                    typeof game !== "undefined" ? game.currentSpeed : 0,    //  Prędkość T-rexa
-                    this.yPos,  //  Pozycja Y T-rexa
-                    typeof closestObstacle.obstacle !== "undefined" ? this.getDistanceBetweenObstacles(closestObstacle.obstacle) : 0]   //  Odległość między przeszkodami
-                ]
-                );
-
-                let prediction = this.brain.nnetwork.predict(input);
-                prediction.print();
-
-                prediction.data().then(function (resposne) {
-                    // Mały skok
-                    if (resposne[0] > 0.5) {
-                        var e = new Event("keydown");
-                        e.key = " ";
-                        e.keyCode = e.key.charCodeAt(0);
-                        e.which = e.keyCode;
-                        document.dispatchEvent(e);
-
-
-                        setTimeout(function () {
-                            e = new Event("keydown");
-                            e.key = " ";
-                            e.keyCode = e.key.charCodeAt(0);
-                            e.which = e.keyCode;
-                            document.dispatchEvent(e);
-                        },
-                            10
-                        );
-                    }
-
-                    // duży skok
-                    if (resposne[1] > 0.5) {
-                        var e = new Event("keydown");
-                        e.key = " ";
-                        e.keyCode = e.key.charCodeAt(0);
-                        e.which = e.keyCode;
-                        document.dispatchEvent(e);
-
-
-                        setTimeout(function () {
-                            e = new Event("keydown");
-                            e.key = " ";
-                            e.keyCode = e.key.charCodeAt(0);
-                            e.which = e.keyCode;
-                            document.dispatchEvent(e);
-                        },
-                            500
-                        );
-                    }
-
-                    // duck
-                    if (resposne[2] > 0.5) {
-                        var e = new Event("keydown");
-                        e.keyCode = 40;
-                        e.which = e.keyCode;
-                        document.dispatchEvent(e);
-
-
-                        setTimeout(function () {
-                            e = new Event("keydown");
-                            e.keyCode = 40;
-                            e.which = e.keyCode;
-                            document.dispatchEvent(e);
-                        },
-                            50
-                        );
-                    }
-
-                });
-            });
-
             // Update the status.
             if (opt_status) {
                 this.status = opt_status;
@@ -2579,7 +2508,48 @@ var game;
          * @param {number} speed
          */
         update: function (deltaTime, speed) {
+            let input = [];
+            let result = [];
             var increment = Math.floor(speed * (FPS / 1000) * deltaTime);
+
+            let closestObstacle = typeof game !== "undefined" ? (typeof game.tRex !== "undefined" ? game.tRex.getClosestObstacle() : undefined) : undefined;
+
+            if (typeof closestObstacle !== "undefined") {
+                input = [
+                    closestObstacle.dist,  //  Dystans do najbliższej przeszkody
+                    typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0,    //  Wysokość najbliższej przeszkody
+                    typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size : 0, //  Szerokość najbliższej przeszkody
+                    typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0,   //  Pozycja Y Pterodaktyla
+                    typeof game !== "undefined" ? game.currentSpeed : 0,    //  Prędkość T-rexa
+                    game.tRex.yPos,  //  Pozycja Y T-rexa
+                    typeof closestObstacle.obstacle !== "undefined" ? game.tRex.getDistanceBetweenObstacles(closestObstacle.obstacle) : 0   //  Odległość między przeszkodami
+                ];
+            }
+
+            if (input.length > 0) {
+                result = game.tRex.brain.nnetwork.noTraceActivate(input);
+            }
+
+            console.log(result);
+
+            //skok
+            if (result[0] < 0.5) {
+                if (!game.tRex.jumping && !game.tRex.ducking) {
+                    game.playSound(game.soundFx.BUTTON_PRESS);
+                    game.tRex.startJump(game.currentSpeed);
+                }
+            }
+
+            // duck
+            if (result[1] < 0.5) {
+                if (game.tRex.jumping) {
+                    // Speed drop, activated only when jump key is not pressed.
+                    game.tRex.setSpeedDrop();
+                } else if (!game.tRex.jumping && !game.tRex.ducking) {
+                    // Duck.
+                    game.tRex.setDuck(true);
+                }
+            }
 
             if (this.xPos[0] <= 0) {
                 this.updateXPos(0, increment);
