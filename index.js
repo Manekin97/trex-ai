@@ -3,10 +3,10 @@
 // found in the LICENSE file.
 // extract from chromium source code by @liuwayong
 var game;
-var checkTime = 0;
+var generation = 0;
 
 AI_config = {
-    POPULATION_SIZE: 10,
+    POPULATION_SIZE: 50,
     MUTATION_RATE: 0.01,
     LEARNING_RATE: 1    //  Nie wiem, czy będe tego używał
 };
@@ -39,7 +39,8 @@ AI_config = {
         this.canvas = null;
         this.canvasCtx = null;
 
-        this.tRex = null;
+        this.tRexes = new Array(AI_config.POPULATION_SIZE);
+        this.deadTrexes = [];
 
         this.distanceMeter = null;
         this.distanceRan = 0;
@@ -278,10 +279,14 @@ AI_config = {
                     case 'GRAVITY':
                     case 'MIN_JUMP_HEIGHT':
                     case 'SPEED_DROP_COEFFICIENT':
-                        this.tRex.config[setting] = value;
+                        this.tRexes.forEach(tRex => {
+                            tRex.config[setting] = value;
+                        });
                         break;
                     case 'INITIAL_JUMP_VELOCITY':
-                        this.tRex.setJumpVelocity(value);
+                        this.tRexes.forEach(tRex => {
+                            tRex.setJumpVelocity(value);
+                        });
                         break;
                     case 'SPEED':
                         this.setSpeed(value);
@@ -385,7 +390,9 @@ AI_config = {
                 this.spriteDef.TEXT_SPRITE, this.dimensions.WIDTH);
 
             // Draw t-rex
-            this.tRex = new Trex(this.canvas, this.spriteDef.TREX);
+            for (let i = 0; i < AI_config.POPULATION_SIZE; i++) {
+                this.tRexes[i] = new Trex(this.canvas, this.spriteDef.TREX);
+            }
 
             this.outerContainerEl.appendChild(this.containerEl);
 
@@ -442,7 +449,9 @@ AI_config = {
                 this.distanceMeter.calcXPos(this.dimensions.WIDTH);
                 this.clearCanvas();
                 this.horizon.update(0, 0, true);
-                this.tRex.update(0);
+                this.tRexes.forEach(tRex => {
+                    tRex.update(0);
+                });
 
                 // Outer container and distance meter.
                 if (this.playing || this.crashed || this.paused) {
@@ -451,7 +460,9 @@ AI_config = {
                     this.distanceMeter.update(0, Math.ceil(this.distanceRan));
                     this.stop();
                 } else {
-                    this.tRex.draw(0, 0);
+                    this.tRexes.forEach(tRex => {
+                        tRex.draw(0, 0);
+                    });
                 }
 
                 // Game over panel.
@@ -469,7 +480,9 @@ AI_config = {
         playIntro: function () {
             if (!this.activated && !this.crashed) {
                 this.playingIntro = true;
-                this.tRex.playingIntro = true;
+                this.tRexes.forEach(tRex => {
+                    tRex.playingIntro = true;
+                });
 
                 // CSS animation definition.
                 var keyframes = '@-webkit-keyframes intro { ' +
@@ -501,7 +514,10 @@ AI_config = {
         startGame: function () {
             this.runningTime = 0;
             this.playingIntro = false;
-            this.tRex.playingIntro = false;
+            this.tRexes.forEach(tRex => {
+                tRex.playingIntro = false;
+            });
+
             this.containerEl.style.webkitAnimation = '';
             this.playCount++;
 
@@ -534,17 +550,21 @@ AI_config = {
             if (this.playing) {
                 this.clearCanvas();
 
-                if (this.tRex.jumping) {
-                    this.tRex.updateJump(deltaTime);
-                }
+                this.tRexes.forEach(tRex => {
+                    if (tRex.jumping) {
+                        tRex.updateJump(deltaTime);
+                    }
+                });
 
                 this.runningTime += deltaTime;
                 var hasObstacles = this.runningTime > this.config.CLEAR_TIME;
 
                 // First jump triggers the intro.
-                if (this.tRex.jumpCount == 1 && !this.playingIntro) {
-                    this.playIntro();
-                }
+                this.tRexes.forEach(tRex => {
+                    if (tRex.jumpCount == 1 && !this.playingIntro) {
+                        this.playIntro();
+                    }
+                });
 
                 // The horizon doesn't move until the intro is over.
                 if (this.playingIntro) {
@@ -556,17 +576,24 @@ AI_config = {
                 }
 
                 // Check for collisions.
-                var collision = hasObstacles &&
-                    checkForCollision(this.horizon.obstacles[0], this.tRex);
+                for (let i = this.tRexes.length - 1; i >= 0; i--) {
+                    var collision = hasObstacles &&
+                        checkForCollision(this.horizon.obstacles[0], this.tRexes[i]);
+                    this.tRexes[i].fitness = this.distanceMeter.getActualDistance(Math.ceil(this.distanceRan));
 
-                if (!collision) {
-                    this.distanceRan += this.currentSpeed * deltaTime / this.msPerFrame;
-
-                    if (this.currentSpeed < this.config.MAX_SPEED) {
-                        this.currentSpeed += this.config.ACCELERATION;
+                    if (collision) {
+                        this.deadTrexes.push(this.tRexes.splice(i, 1)[0]);
+                        if (this.tRexes.length <= 0) {
+                            this.gameOver();    //zmienić tu
+                            break;
+                        }
                     }
-                } else {
-                    this.gameOver();
+                }
+
+                this.distanceRan += this.currentSpeed * deltaTime / this.msPerFrame;
+
+                if (this.currentSpeed < this.config.MAX_SPEED) {
+                    this.currentSpeed += this.config.ACCELERATION;
                 }
 
                 var playAchievementSound = this.distanceMeter.update(deltaTime,
@@ -599,9 +626,15 @@ AI_config = {
                 }
             }
 
-            if (this.playing || (!this.activated &&
-                this.tRex.blinkCount < Runner.config.MAX_BLINK_COUNT)) {
-                this.tRex.update(deltaTime);
+            this.tRexes.forEach(tRex => {
+                if (this.playing || (!this.activated &&
+                    tRex.blinkCount < Runner.config.MAX_BLINK_COUNT)) {
+                    tRex.update(deltaTime);
+                    // this.scheduleNextUpdate();
+                }
+            });
+
+            if (this.playing || (!this.activated && this.tRexes[this.tRexes.length - 1].blinkCount < Runner.config.MAX_BLINK_COUNT)) {
                 this.scheduleNextUpdate();
             }
         },
@@ -685,10 +718,12 @@ AI_config = {
                         }
                     }
                     //  Play sound effect and jump on starting the game for the first time.
-                    if (!this.tRex.jumping && !this.tRex.ducking) {
-                        this.playSound(this.soundFx.BUTTON_PRESS);
-                        this.tRex.startJump(this.currentSpeed);
-                    }
+                    this.tRexes.forEach(tRex => {
+                        if (!tRex.jumping && !tRex.ducking) {
+                            this.playSound(this.soundFx.BUTTON_PRESS);
+                            tRex.startJump(this.currentSpeed);
+                        }
+                    });
                 }
 
                 if (this.crashed && e.type == Runner.events.TOUCHSTART &&
@@ -697,16 +732,18 @@ AI_config = {
                 }
             }
 
-            if (this.playing && !this.crashed && Runner.keycodes.DUCK[e.keyCode]) {
-                e.preventDefault();
-                if (this.tRex.jumping) {
-                    // Speed drop, activated only when jump key is not pressed.
-                    this.tRex.setSpeedDrop();
-                } else if (!this.tRex.jumping && !this.tRex.ducking) {
-                    // Duck.
-                    this.tRex.setDuck(true);
+            this.tRexes.forEach(tRex => {
+                if (this.playing && !this.crashed && Runner.keycodes.DUCK[e.keyCode]) {
+                    e.preventDefault();
+                    if (tRex.jumping) {
+                        // Speed drop, activated only when jump key is not pressed.
+                        tRex.setSpeedDrop();
+                    } else if (!tRex.jumping && !tRex.ducking) {
+                        // Duck.
+                        tRex.setDuck(true);
+                    }
                 }
-            }
+            });
         },
 
         /**
@@ -714,30 +751,30 @@ AI_config = {
          * @param {Event} e
          */
         onKeyUp: function (e) {
-            var keyCode = String(e.keyCode);
-            var isjumpKey = Runner.keycodes.JUMP[keyCode] ||
-                e.type == Runner.events.TOUCHEND ||
-                e.type == Runner.events.MOUSEDOWN;
+            // var keyCode = String(e.keyCode);
+            // var isjumpKey = Runner.keycodes.JUMP[keyCode] ||
+            //     e.type == Runner.events.TOUCHEND ||
+            //     e.type == Runner.events.MOUSEDOWN;
 
-            if (this.isRunning() && isjumpKey) {
-                this.tRex.endJump();
-            } else if (Runner.keycodes.DUCK[keyCode]) {
-                this.tRex.speedDrop = false;
-                this.tRex.setDuck(false);
-            } else if (this.crashed) {
-                // Check that enough time has elapsed before allowing jump key to restart.
-                var deltaTime = getTimeStamp() - this.time;
+            // if (this.isRunning() && isjumpKey) {
+            //     this.tRex.endJump();
+            // } else if (Runner.keycodes.DUCK[keyCode]) {
+            //     this.tRex.speedDrop = false;
+            //     this.tRex.setDuck(false);
+            // } else if (this.crashed) {
+            //     // Check that enough time has elapsed before allowing jump key to restart.
+            //     var deltaTime = getTimeStamp() - this.time;
 
-                if (Runner.keycodes.RESTART[keyCode] || this.isLeftClickOnCanvas(e) ||
-                    (deltaTime >= this.config.GAMEOVER_CLEAR_TIME &&
-                        Runner.keycodes.JUMP[keyCode])) {
-                    this.restart();
-                }
-            } else if (this.paused && isjumpKey) {
-                // Reset the jump state
-                this.tRex.reset();
-                this.play();
-            }
+            //     if (Runner.keycodes.RESTART[keyCode] || this.isLeftClickOnCanvas(e) ||
+            //         (deltaTime >= this.config.GAMEOVER_CLEAR_TIME &&
+            //             Runner.keycodes.JUMP[keyCode])) {
+            //         this.restart();
+            //     }
+            // } else if (this.paused && isjumpKey) {
+            //     // Reset the jump state
+            //     this.tRex.reset();
+            //     this.play();
+            // }
         },
 
         /**
@@ -776,12 +813,13 @@ AI_config = {
             this.playSound(this.soundFx.HIT);
             vibrate(200);
 
-
             this.stop();
             this.crashed = true;
             this.distanceMeter.acheivement = false;
 
-            this.tRex.update(100, Trex.status.CRASHED);
+            this.tRexes.forEach(tRex => {
+                tRex.update(100, Trex.status.CRASHED);
+            });
 
             // Game over panel.
             if (!this.gameOverPanel) {
@@ -800,10 +838,31 @@ AI_config = {
 
             // Reset the time clock.
             this.time = getTimeStamp();
-
             this.restart();
-            this.tRex.brain.nnetwork = neataptic.Network.crossOver(this.tRex.brain.nnetwork, this.tRex.brain.nnetwork);
-            this.tRex.brain.nnetwork.mutate(neataptic.methods.mutation.MOD_WEIGHT);
+
+            // AI Stuff
+            this.tRexes = new Array(AI_config.POPULATION_SIZE);
+            for (let i = 0; i < this.tRexes.length; i++) {
+                this.tRexes[i] = new Trex(game.canvas, game.spriteDef.TREX);
+                this.tRexes[i].brain = new Brain(7, 10, 2);
+            }
+
+            let max = -1;
+            let best;
+            this.deadTrexes.forEach(tRex => {
+                if (tRex.fitness > max) {
+                    max = tRex.fitness;
+                    best = tRex;
+                }
+            });
+
+            for (let i = 0; i < this.tRexes.length; i++) {
+                this.tRexes[i].brain.nnetwork = neataptic.Network.crossOver(best.brain.nnetwork, best.brain.nnetwork);
+                this.tRexes[i].brain.nnetwork.mutate(neataptic.methods.mutation.MOD_WEIGHT);
+            }
+
+            this.deadTrexes = [];
+            generation++;
         },
 
         stop: function () {
@@ -817,7 +876,9 @@ AI_config = {
             if (!this.crashed) {
                 this.playing = true;
                 this.paused = false;
-                this.tRex.update(0, Trex.status.RUNNING);
+                this.tRexes.forEach(tRex => {
+                    tRex.update(0, Trex.status.RUNNING);
+                });
                 this.time = getTimeStamp();
                 this.update();
             }
@@ -836,7 +897,9 @@ AI_config = {
                 this.clearCanvas();
                 this.distanceMeter.reset(this.highestScore);
                 this.horizon.reset();
-                this.tRex.reset();
+                this.tRexes.forEach(tRex => {
+                    tRex.reset();
+                });
                 this.playSound(this.soundFx.BUTTON_PRESS);
                 this.invert(true);
                 this.update();
@@ -851,7 +914,9 @@ AI_config = {
                 document.visibilityState != 'visible') {
                 this.stop();
             } else if (!this.crashed) {
-                this.tRex.reset();
+                this.tRexes.forEach(tRex => {
+                    tRex.reset();
+                });
                 this.play();
             }
         },
@@ -1523,7 +1588,8 @@ AI_config = {
         this.jumpspotX = 0;
 
         // AI stuff
-        this.brain = new Brain(7, 5, 3);
+        this.brain = new Brain(7, 10, 2);
+        this.fitness = 0;
 
         this.init();
     };
@@ -2508,46 +2574,52 @@ AI_config = {
          * @param {number} speed
          */
         update: function (deltaTime, speed) {
-            let input = [];
-            let result = [];
             var increment = Math.floor(speed * (FPS / 1000) * deltaTime);
 
-            let closestObstacle = typeof game !== "undefined" ? (typeof game.tRex !== "undefined" ? game.tRex.getClosestObstacle() : undefined) : undefined;
+            for (let i = 0; i < game.tRexes.length; i++) {
+                let input = [];
+                let output = [];
 
-            if (typeof closestObstacle !== "undefined") {
-                input = [
-                    closestObstacle.dist,  //  Dystans do najbliższej przeszkody
-                    typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0,    //  Wysokość najbliższej przeszkody
-                    typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size : 0, //  Szerokość najbliższej przeszkody
-                    typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0,   //  Pozycja Y Pterodaktyla
-                    typeof game !== "undefined" ? game.currentSpeed : 0,    //  Prędkość T-rexa
-                    game.tRex.yPos,  //  Pozycja Y T-rexa
-                    typeof closestObstacle.obstacle !== "undefined" ? game.tRex.getDistanceBetweenObstacles(closestObstacle.obstacle) : 0   //  Odległość między przeszkodami
-                ];
-            }
+                let closestObstacle = typeof game !== "undefined" ? (typeof game.tRexes[i] !== "undefined" ? game.tRexes[i].getClosestObstacle() : undefined) : undefined;
 
-            if (input.length > 0) {
-                result = game.tRex.brain.nnetwork.noTraceActivate(input);
-            }
-
-            console.log(result);
-
-            //skok
-            if (result[0] < 0.5) {
-                if (!game.tRex.jumping && !game.tRex.ducking) {
-                    game.playSound(game.soundFx.BUTTON_PRESS);
-                    game.tRex.startJump(game.currentSpeed);
+                if (typeof closestObstacle !== "undefined") {
+                    input = [
+                        closestObstacle.dist,  //  Dystans do najbliższej przeszkody
+                        typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0,    //  Wysokość najbliższej przeszkody
+                        typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size : 0, //  Szerokość najbliższej przeszkody
+                        typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0,   //  Pozycja Y Pterodaktyla
+                        typeof game !== "undefined" ? game.currentSpeed : 0,    //  Prędkość T-rexa
+                        game.tRexes[i].yPos,  //  Pozycja Y T-rexa
+                        typeof closestObstacle.obstacle !== "undefined" ? game.tRexes[i].getDistanceBetweenObstacles(closestObstacle.obstacle) : 0   //  Odległość między przeszkodami
+                    ];
                 }
-            }
 
-            // duck
-            if (result[1] < 0.5) {
-                if (game.tRex.jumping) {
-                    // Speed drop, activated only when jump key is not pressed.
-                    game.tRex.setSpeedDrop();
-                } else if (!game.tRex.jumping && !game.tRex.ducking) {
-                    // Duck.
-                    game.tRex.setDuck(true);
+                if (input.length > 0) {
+                    output = game.tRexes[i].brain.nnetwork.noTraceActivate(input);
+                }
+
+                document.getElementById("output1").innerHTML = "output_1: " + output[0] + "<br>";
+                document.getElementById("output2").innerHTML = "output_2: " + output[1] + "<br>";
+                document.getElementById("generation").innerHTML = "Generacja: " + generation + "<br>";
+                document.getElementById("alive").innerHTML = "Żywe t-Rexy : " + game.tRexes.length + "<br>";
+                document.getElementById("distanceRan").innerHTML = "distanceRan: " + game.distanceMeter.getActualDistance(game.distanceRan) + "<br>";
+
+                //skok
+                if (output[0] < 0.5) {
+                    if (!game.tRexes[i].jumping && !game.tRexes[i].ducking) {
+                        game.playSound(game.soundFx.BUTTON_PRESS);
+                        game.tRexes[i].startJump(game.currentSpeed);
+                    }
+                }
+                // duck
+                else if (output[1] < 0.5) {
+                    if (game.tRexes[i].jumping) {
+                        // Speed drop, activated only when jump key is not pressed.
+                        game.tRexes[i].setSpeedDrop();
+                    } else if (!game.tRexes[i].jumping && !game.tRexes[i].ducking) {
+                        // Duck.
+                        game.tRexes[i].setDuck(true);
+                    }
                 }
             }
 
