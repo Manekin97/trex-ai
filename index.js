@@ -3,10 +3,10 @@
 // found in the LICENSE file.
 // extract from chromium source code by @liuwayong
 var game;
-var generation = 0;
+var generation = 1;
 
 AI_config = {
-    POPULATION_SIZE: 50,
+    POPULATION_SIZE: 200,
     MUTATION_RATE: 0.01,
     LEARNING_RATE: 1    //  Nie wiem, czy będe tego używał
 };
@@ -239,6 +239,14 @@ AI_config = {
 
 
     Runner.prototype = {
+        SaveNetwork: function (tRex, filename) {
+            tRex.brain.Save(filename);
+        },
+
+        LoadNetwork: function (tRex, filename) {
+            tRex.brain.Open(filename);
+        },
+
         /**
          * Whether the easter egg has been disabled. CrOS enterprise enrolled devices.
          * @return {boolean}
@@ -392,6 +400,7 @@ AI_config = {
             // Draw t-rex
             for (let i = 0; i < AI_config.POPULATION_SIZE; i++) {
                 this.tRexes[i] = new Trex(this.canvas, this.spriteDef.TREX);
+                this.LoadNetwork(this.tRexes[i], "./SavedTrexes/best.json");
             }
 
             this.outerContainerEl.appendChild(this.containerEl);
@@ -855,6 +864,10 @@ AI_config = {
                     best = tRex;
                 }
             });
+
+            if (generation == 30) {
+                game.SaveNetwork(best, "best");
+            }
 
             for (let i = 0; i < this.tRexes.length; i++) {
                 this.tRexes[i].brain.nnetwork = neataptic.Network.crossOver(best.brain.nnetwork, best.brain.nnetwork);
@@ -2584,13 +2597,13 @@ AI_config = {
 
                 if (typeof closestObstacle !== "undefined") {
                     input = [
-                        closestObstacle.dist,  //  Dystans do najbliższej przeszkody
-                        typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0,    //  Wysokość najbliższej przeszkody
-                        typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size : 0, //  Szerokość najbliższej przeszkody
-                        typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0,   //  Pozycja Y Pterodaktyla
-                        typeof game !== "undefined" ? game.currentSpeed : 0,    //  Prędkość T-rexa
-                        game.tRexes[i].yPos,  //  Pozycja Y T-rexa
-                        typeof closestObstacle.obstacle !== "undefined" ? game.tRexes[i].getDistanceBetweenObstacles(closestObstacle.obstacle) : 0   //  Odległość między przeszkodami
+                        closestObstacle.dist / 600,  //  Dystans do najbliższej przeszkody
+                        typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height / 200 : 0,    //  Wysokość najbliższej przeszkody
+                        typeof closestObstacle.obstacle.typeConfig !== "undefined" ? (closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size) / 200 : 0, //  Szerokość najbliższej przeszkody
+                        typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height / 100 : 0,   //  Pozycja Y Pterodaktyla
+                        typeof game !== "undefined" ? game.currentSpeed / game.config.MAX_SPEED : 0,    //  Prędkość T-rexa
+                        game.tRexes[i].yPos / 200,  //  Pozycja Y T-rexa
+                        typeof closestObstacle.obstacle !== "undefined" ? game.tRexes[i].getDistanceBetweenObstacles(closestObstacle.obstacle) / 600 : 0   //  Odległość między przeszkodami
                     ];
                 }
 
@@ -2612,7 +2625,7 @@ AI_config = {
                     }
                 }
                 // duck
-                else if (output[1] < 0.5) {
+                if (output[1] < 0.5) {
                     if (game.tRexes[i].jumping) {
                         // Speed drop, activated only when jump key is not pressed.
                         game.tRexes[i].setSpeedDrop();
