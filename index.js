@@ -402,7 +402,7 @@ AI_config = {
                 this.tRexes[i] = new Trex(this.canvas, this.spriteDef.TREX);
                 this.LoadNetwork(this.tRexes[i], "./SavedTrexes/best.json");
             }
-
+            drawGraph(this.tRexes[1].brain.nnetwork.graph(500,350), '.draw', false);            
             this.outerContainerEl.appendChild(this.containerEl);
 
             if (IS_MOBILE) {
@@ -2617,6 +2617,7 @@ AI_config = {
                 document.getElementById("alive").innerHTML = "Żywe t-Rexy : " + game.tRexes.length + "<br>";
                 document.getElementById("distanceRan").innerHTML = "distanceRan: " + game.distanceMeter.getActualDistance(game.distanceRan) + "<br>";
 
+                
                 //skok
                 if (output[0] < 0.5) {
                     if (!game.tRexes[i].jumping && !game.tRexes[i].ducking) {

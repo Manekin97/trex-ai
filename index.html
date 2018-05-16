@@ -7,6 +7,7 @@
     <title>chrome easter egg: t-rex runner</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4"
         crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://rawgit.com/wagenaartje/neataptic/master/graph/graph.css">
     <link rel="stylesheet" href="index.css">
     <script src="https://wagenaartje.github.io/neataptic/cdn/1.4.7/neataptic.js"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
@@ -15,6 +16,11 @@
         crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
         crossorigin="anonymous"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://marvl.infotech.monash.edu/webcola/cola.v3.min.js"></script>
+
+    <script src="https://rawgit.com/wagenaartje/neataptic/master/dist/neataptic.js"></script>
+    <script src="https://rawgit.com/wagenaartje/neataptic/master/graph/graph.js"></script>
     <script src="brain.js"></script>
     <script src="index.js"></script>
 </head>
@@ -67,14 +73,45 @@
 
         <div class="col">
             <div class="card">
-                <div style="text-align: center" id="info">
-                    <h3 id="output1"></h3>
-                    <h3 id="output2"></h3>
-                    <h3 id="distanceRan"></h3>
+                <div class="row px-0 mg-0">
+                    <div class="col px-0 mg-0" style="text-align: center" id="info">
+                        <h3 id="output1"></h3>
+                        <h3 id="output2"></h3>
+                        <h3 id="distanceRan"></h3>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="form-group">
+                            <input class="form-control" type="number" min="0" id="" placeholder="Prędkość">
+                        </div>
+                        <div class="form-group">
+                            <input class="form-control" type="number" min="0" id="" placeholder="Maksymalna prędkośc">
+                        </div>
+                        <div class="form-group">
+                            <input class="form-control" type="number" min="0" id="" placeholder="Przyspieszenie">
+                        </div>
+                        <div class="form-group mb-0">
+                            <button class="btn btn-default" type="submit">Zmień</button>
+                        </div>
+
+                    </form>
                 </div>
             </div>
         </div>
     </div>
+    <div clas="container" style="text-align: center">
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <svg class="draw mt-1" width="1000px" height="400px"></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 
 
