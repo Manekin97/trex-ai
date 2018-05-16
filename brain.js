@@ -16,8 +16,11 @@ class Brain {
     }
 
     Open(path) {
-        $.getJSON(path).then(function (file) {
-            this.nnetwork = neataptic.Network.fromJSON(file);
-        });
+        this.nnetwork = neataptic.Network.fromJSON($.ajax({
+            url: path,
+            dataType: 'json',
+            async: false,
+            success: function (data) { }
+        }).responseJSON);
     }
 }

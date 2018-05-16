@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0, user-scalable=no">
-    <title>chrome easter egg: t-rex runner</title>
+    <title>T-Rex AI</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4"
         crossorigin="anonymous">
     <link rel="stylesheet" href="index.css">
@@ -28,8 +28,28 @@
 
     <div class="row">
         <div class="col">
-            <div class="card">
+            <div class="card AIform">
+                <form>
+                    <div class="form-group">
+                        <label for="popSize">Rozmiar populacji
+                            <input type="number" class="form-control form-control-sm" id="popSize" min="1" max="1000">
+                            <small class="form-text text-muted">Pozostaw puste, aby ustawić wartość domyślną</small>                            
+                        </label>
+                    </div>
 
+                    <div class="form-group">
+                        <label for="tRexLoad">Załaduj najlepszego T-rexa
+                            <input type="file" class="form-control-file form-control-sm" id="tRexLoad">
+                        </label>
+                        <small class="form-text text-muted">Pozostaw puste, aby rozpocząć naukę od początku</small>
+                    </div>
+
+                    <div class="float-right">
+                        <button type="button" class="btn btn-primary" id="AIformBtn" onclick="start();">
+                            START
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -75,8 +95,6 @@
             </div>
         </div>
     </div>
-
-
 
 </body>
 

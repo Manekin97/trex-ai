@@ -4,12 +4,18 @@
 // extract from chromium source code by @liuwayong
 var game;
 var generation = 1;
+var tRexPath;
 
 AI_config = {
-    POPULATION_SIZE: 200,
+    POPULATION_SIZE: 1,
     MUTATION_RATE: 0.01,
     LEARNING_RATE: 1    //  Nie wiem, czy będe tego używał
 };
+
+function start(){
+    AI_config.POPULATION_SIZE = document.getElementById("popSize").value || AI_config.POPULATION_SIZE;
+    game = new Runner('.interstitial-wrapper');
+}
 
 (function () {
     'use strict';
@@ -39,7 +45,7 @@ AI_config = {
         this.canvas = null;
         this.canvasCtx = null;
 
-        this.tRexes = new Array(AI_config.POPULATION_SIZE);
+        this.tRexes = [];
         this.deadTrexes = [];
 
         this.distanceMeter = null;
@@ -243,8 +249,10 @@ AI_config = {
             tRex.brain.Save(filename);
         },
 
-        LoadNetwork: function (tRex, filename) {
-            tRex.brain.Open(filename);
+        LoadNetwork: function (path) {
+            this.tRexes.forEach(tRex => {
+                tRex.brain.Open(path);
+            });
         },
 
         /**
@@ -369,7 +377,7 @@ AI_config = {
         /**
          * Game initialiser.
          */
-        init: function () {
+        init: function (population_size) {
             // Hide the static icon.
             document.querySelector('.' + Runner.classes.ICON).style.visibility =
                 'hidden';
@@ -397,10 +405,22 @@ AI_config = {
             this.distanceMeter = new DistanceMeter(this.canvas,
                 this.spriteDef.TEXT_SPRITE, this.dimensions.WIDTH);
 
+            let AIformBtn = document.getElementById("AIformBtn");
+            // AIformBtn.addEventListener('click', this.init(popSize));
+
+            AI_config.POPULATION_SIZE = population_size || AI_config.POPULATION_SIZE;
+            console.log(AI_config.POPULATION_SIZE);
+
+            // this.tRexes = new Array(AI_config.POPULATION_SIZE);
             // Draw t-rex
             for (let i = 0; i < AI_config.POPULATION_SIZE; i++) {
-                this.tRexes[i] = new Trex(this.canvas, this.spriteDef.TREX);
-                this.LoadNetwork(this.tRexes[i], "./SavedTrexes/best.json");
+                // this.tRexes[i] = new Trex(this.canvas, this.spriteDef.TREX);
+                this.tRexes.push(new Trex(this.canvas, this.spriteDef.TREX));
+            }
+
+            let path = document.getElementById("tRexLoad").value;
+            if (path) {
+                this.LoadNetwork("./SavedTrexes/" + path.substr(path.lastIndexOf('\\') + 1));
             }
 
             this.outerContainerEl.appendChild(this.containerEl);
@@ -851,7 +871,7 @@ AI_config = {
 
             // AI Stuff
             this.tRexes = new Array(AI_config.POPULATION_SIZE);
-            for (let i = 0; i < this.tRexes.length; i++) {
+            for (let i = 0; i < AI_config.POPULATION_SIZE; i++) {
                 this.tRexes[i] = new Trex(game.canvas, game.spriteDef.TREX);
                 this.tRexes[i].brain = new Brain(7, 10, 2);
             }
@@ -865,7 +885,7 @@ AI_config = {
                 }
             });
 
-            if (generation == 30) {
+            if (generation == 50) {
                 game.SaveNetwork(best, "best");
             }
 
@@ -1601,7 +1621,7 @@ AI_config = {
         this.jumpspotX = 0;
 
         // AI stuff
-        this.brain = new Brain(7, 10, 2);
+        this.brain = null;
         this.fitness = 0;
 
         this.init();
@@ -1708,6 +1728,7 @@ AI_config = {
 
             this.draw(0, 0);
             this.update(0, Trex.status.WAITING);
+            this.brain = new Brain(7, 10, 2);
         },
 
         getClosestObstacle: function () {
@@ -2597,14 +2618,23 @@ AI_config = {
 
                 if (typeof closestObstacle !== "undefined") {
                     input = [
-                        closestObstacle.dist / 600,  //  Dystans do najbliższej przeszkody
-                        typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height / 200 : 0,    //  Wysokość najbliższej przeszkody
-                        typeof closestObstacle.obstacle.typeConfig !== "undefined" ? (closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size) / 200 : 0, //  Szerokość najbliższej przeszkody
-                        typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height / 100 : 0,   //  Pozycja Y Pterodaktyla
-                        typeof game !== "undefined" ? game.currentSpeed / game.config.MAX_SPEED : 0,    //  Prędkość T-rexa
-                        game.tRexes[i].yPos / 200,  //  Pozycja Y T-rexa
-                        typeof closestObstacle.obstacle !== "undefined" ? game.tRexes[i].getDistanceBetweenObstacles(closestObstacle.obstacle) / 600 : 0   //  Odległość między przeszkodami
+                        closestObstacle.dist,  //  Dystans do najbliższej przeszkody
+                        typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0,    //  Wysokość najbliższej przeszkody
+                        typeof closestObstacle.obstacle.typeConfig !== "undefined" ? (closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size) : 0, //  Szerokość najbliższej przeszkody
+                        typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0,   //  Pozycja Y Pterodaktyla
+                        typeof game !== "undefined" ? game.currentSpeed : 0,    //  Prędkość T-rexa
+                        game.tRexes[i].yPos,  //  Pozycja Y T-rexa
+                        typeof closestObstacle.obstacle !== "undefined" ? game.tRexes[i].getDistanceBetweenObstacles(closestObstacle.obstacle) : 0   //  Odległość między przeszkodami
                     ];
+                    // input = [
+                    //     closestObstacle.dist / 600,  //  Dystans do najbliższej przeszkody
+                    //     typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height / 200 : 0,    //  Wysokość najbliższej przeszkody
+                    //     typeof closestObstacle.obstacle.typeConfig !== "undefined" ? (closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size) / 200 : 0, //  Szerokość najbliższej przeszkody
+                    //     typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height / 100 : 0,   //  Pozycja Y Pterodaktyla
+                    //     typeof game !== "undefined" ? game.currentSpeed / game.config.MAX_SPEED : 0,    //  Prędkość T-rexa
+                    //     game.tRexes[i].yPos / 200,  //  Pozycja Y T-rexa
+                    //     typeof closestObstacle.obstacle !== "undefined" ? game.tRexes[i].getDistanceBetweenObstacles(closestObstacle.obstacle) / 600 : 0   //  Odległość między przeszkodami
+                    // ];
                 }
 
                 if (input.length > 0) {
@@ -2876,8 +2906,8 @@ AI_config = {
 })();
 
 
-function onDocumentLoad() {
-    game = new Runner('.interstitial-wrapper');
-}
+// function onDocumentLoad() {
+//     game = new Runner('.interstitial-wrapper');
+// }
 
-document.addEventListener('DOMContentLoaded', onDocumentLoad);
+// document.addEventListener('DOMContentLoaded', onDocumentLoad);
