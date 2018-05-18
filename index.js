@@ -1,19 +1,29 @@
 // Copyright (c) 2014 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-// extract from chromium source code by @liuwayong
 var game;
 var generation = 1;
 var tRexPath;
 
 AI_config = {
+    INPUTS: 7,
+    HIDDEN_LAYERS: [10],
+    OUTPUTS: 2,
     POPULATION_SIZE: 1,
-    MUTATION_RATE: 0.01,
-    LEARNING_RATE: 1    //  Nie wiem, czy będe tego używał
+    MUTATION_RATE: 0.5,
+    NORMALIZE_DATA: false,
+    ELITISM: false,
+    ELITISM_SIZE: 10
 };
 
-function start(){
+function start() {
     AI_config.POPULATION_SIZE = document.getElementById("popSize").value || AI_config.POPULATION_SIZE;
+    AI_config.HIDDEN_LAYERS = document.getElementById("hiddenLayers").value.split(",").map(item => item.trim()) || AI_config.HIDDEN_LAYERS;
+    AI_config.MUTATION_RATE = document.getElementById("mutRate").value || AI_config.MUTATION_RATE;
+    AI_config.NORMALIZE_DATA = document.getElementById("normInput").checked || AI_config.NORMALIZE_DATA;
+    AI_config.ELITISM = document.getElementById("elitism").checked || AI_config.ELITISM;
+    AI_config.ELITISM_SIZE = document.getElementById("elitSize").disabled ? AI_config.ELITISM_SIZE : document.getElementById("elitSize").value || AI_config.ELITISM_SIZE;
+
     game = new Runner('.interstitial-wrapper');
 }
 
@@ -377,7 +387,7 @@ function start(){
         /**
          * Game initialiser.
          */
-        init: function (population_size) {
+        init: function () {
             // Hide the static icon.
             document.querySelector('.' + Runner.classes.ICON).style.visibility =
                 'hidden';
@@ -405,23 +415,17 @@ function start(){
             this.distanceMeter = new DistanceMeter(this.canvas,
                 this.spriteDef.TEXT_SPRITE, this.dimensions.WIDTH);
 
-            let AIformBtn = document.getElementById("AIformBtn");
-            // AIformBtn.addEventListener('click', this.init(popSize));
-
-            AI_config.POPULATION_SIZE = population_size || AI_config.POPULATION_SIZE;
-            console.log(AI_config.POPULATION_SIZE);
-
-            // this.tRexes = new Array(AI_config.POPULATION_SIZE);
             // Draw t-rex
             for (let i = 0; i < AI_config.POPULATION_SIZE; i++) {
-                // this.tRexes[i] = new Trex(this.canvas, this.spriteDef.TREX);
                 this.tRexes.push(new Trex(this.canvas, this.spriteDef.TREX));
             }
 
             let path = document.getElementById("tRexLoad").value;
             if (path) {
                 this.LoadNetwork("./SavedTrexes/" + path.substr(path.lastIndexOf('\\') + 1));
+                drawGraph(this.tRexes[0].brain.nnetwork.graph(500, 350), '.draw', false);
             }
+
 
             this.outerContainerEl.appendChild(this.containerEl);
 
@@ -526,9 +530,6 @@ function start(){
                 this.containerEl.style.webkitAnimation = 'intro .4s ease-out 1 both';
                 this.containerEl.style.width = this.dimensions.WIDTH + 'px';
 
-                // if (this.touchController) {
-                //     this.outerContainerEl.appendChild(this.touchController);
-                // }
                 this.playing = true;
                 this.activated = true;
             } else if (this.crashed) {
@@ -656,8 +657,7 @@ function start(){
             }
 
             this.tRexes.forEach(tRex => {
-                if (this.playing || (!this.activated &&
-                    tRex.blinkCount < Runner.config.MAX_BLINK_COUNT)) {
+                if (this.playing || (!this.activated && tRex.blinkCount < Runner.config.MAX_BLINK_COUNT)) {
                     tRex.update(deltaTime);
                     // this.scheduleNextUpdate();
                 }
@@ -850,30 +850,17 @@ function start(){
                 tRex.update(100, Trex.status.CRASHED);
             });
 
-            // Game over panel.
-            if (!this.gameOverPanel) {
-                this.gameOverPanel = new GameOverPanel(this.canvas,
-                    this.spriteDef.TEXT_SPRITE, this.spriteDef.RESTART,
-                    this.dimensions);
-            } else {
-                this.gameOverPanel.draw();
-            }
-
             // Update the high score.
             if (this.distanceRan > this.highestScore) {
                 this.highestScore = Math.ceil(this.distanceRan);
                 this.distanceMeter.setHighScore(this.highestScore);
             }
 
-            // Reset the time clock.
-            this.time = getTimeStamp();
-            this.restart();
-
             // AI Stuff
             this.tRexes = new Array(AI_config.POPULATION_SIZE);
             for (let i = 0; i < AI_config.POPULATION_SIZE; i++) {
                 this.tRexes[i] = new Trex(game.canvas, game.spriteDef.TREX);
-                this.tRexes[i].brain = new Brain(7, 10, 2);
+                this.tRexes[i].brain = new Brain(AI_config.INPUTS, AI_config.HIDDEN_LAYERS, AI_config.OUTPUTS);
             }
 
             let max = -1;
@@ -885,17 +872,21 @@ function start(){
                 }
             });
 
-            if (generation == 50) {
-                game.SaveNetwork(best, "best");
-            }
-
             for (let i = 0; i < this.tRexes.length; i++) {
                 this.tRexes[i].brain.nnetwork = neataptic.Network.crossOver(best.brain.nnetwork, best.brain.nnetwork);
-                this.tRexes[i].brain.nnetwork.mutate(neataptic.methods.mutation.MOD_WEIGHT);
+
+                let rand = Math.random();
+                if (rand < AI_config.MUTATION_RATE) {
+                    this.tRexes[i].brain.nnetwork.mutate(neataptic.methods.mutation.MOD_WEIGHT);
+                }
             }
 
             this.deadTrexes = [];
             generation++;
+
+            // Reset the time clock.
+            this.time = getTimeStamp();
+            this.restart();
         },
 
         stop: function () {
@@ -1726,9 +1717,9 @@ function start(){
             this.yPos = this.groundYPos;
             this.minJumpHeight = this.groundYPos - this.config.MIN_JUMP_HEIGHT;
 
+            this.brain = new Brain(AI_config.INPUTS, AI_config.HIDDEN_LAYERS, AI_config.OUTPUTS);
             this.draw(0, 0);
             this.update(0, Trex.status.WAITING);
-            this.brain = new Brain(7, 10, 2);
         },
 
         getClosestObstacle: function () {
@@ -2641,11 +2632,8 @@ function start(){
                     output = game.tRexes[i].brain.nnetwork.noTraceActivate(input);
                 }
 
-                document.getElementById("output1").innerHTML = "output_1: " + output[0] + "<br>";
-                document.getElementById("output2").innerHTML = "output_2: " + output[1] + "<br>";
                 document.getElementById("generation").innerHTML = "Generacja: " + generation + "<br>";
-                document.getElementById("alive").innerHTML = "Żywe t-Rexy : " + game.tRexes.length + "<br>";
-                document.getElementById("distanceRan").innerHTML = "distanceRan: " + game.distanceMeter.getActualDistance(game.distanceRan) + "<br>";
+                document.getElementById("alive").innerHTML = "Żywe t-Rexy: " + game.tRexes.length + "<br>";
 
                 //skok
                 if (output[0] < 0.5) {
@@ -2655,7 +2643,7 @@ function start(){
                     }
                 }
                 // duck
-                if (output[1] < 0.5) {
+                else if (output[1] < 0.5) {
                     if (game.tRexes[i].jumping) {
                         // Speed drop, activated only when jump key is not pressed.
                         game.tRexes[i].setSpeedDrop();
@@ -2904,10 +2892,3 @@ function start(){
         }
     };
 })();
-
-
-// function onDocumentLoad() {
-//     game = new Runner('.interstitial-wrapper');
-// }
-
-// document.addEventListener('DOMContentLoaded', onDocumentLoad);

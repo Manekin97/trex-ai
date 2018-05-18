@@ -1,6 +1,18 @@
 class Brain {
-    constructor(inputsCount, hiddenLayersCount, outputsCount) {
-        this.nnetwork = new neataptic.architect.Perceptron(7, 10, 2);
+    constructor(inputs, hiddenLayers, outputs) {
+        // this.nnetwork = new neataptic.architect.Perceptron(inputs, 10, outputs);
+        hiddenLayers.unshift(inputs);
+        hiddenLayers.push(outputs);
+
+        function construct(constructor, args) {
+            function Foo() {
+                return constructor.apply(this, args);
+            }
+            Foo.prototype = constructor.prototype;
+            return new Foo();
+        }
+
+        this.nnetwork = construct(neataptic.architect.Perceptron, hiddenLayers);
     }
 
     Save(filename) {
@@ -23,4 +35,16 @@ class Brain {
             success: function (data) { }
         }).responseJSON);
     }
+}
+
+function NormalizeFitness(tRexes) {
+    let sum = 0;
+
+    tRexes.forEach(tRex => {
+        sum += tRex.fitness;
+    });
+
+    tRexes.forEach(tRex => {
+        tRex.fitness /= sum;
+    });
 }
