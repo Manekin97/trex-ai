@@ -1,6 +1,6 @@
-## t-rex-runner
+## T-Rex Runner AI
 
-the trex runner game AI extracted from chrome offline err page.
+The T-Rex Runner game AI using neuroevolution.
 
 
 
