@@ -47,6 +47,7 @@ function NormalizeFitness() {
 }
 
 function SelectParent(tRexes) {
+    let ret;
     let index = 0;
     let rnd = Math.random();
 
@@ -55,7 +56,7 @@ function SelectParent(tRexes) {
         index++;
     }
 
-    return $.extend(tRexes[--index]);
+    return $.extend(true, ret, tRexes[--index]);
 }
 
 function Mutate(tRex) {
@@ -79,4 +80,23 @@ function Breed(tRex) {
     Mutate(tRex);
 }
 
-// function Find
+function FindNBest(n) {
+    let ret = [];
+    let data = [];
+
+    if (game.deadTrexes.length > 0) {
+        for (let i = 0; i < game.deadTrexes.length; i++) {
+            data.push(game.deadTrexes[i]);
+        }
+
+        data.sort(function (a, b) {
+            return (a.fitness < b.fitness) ? -1 : (a.fitness > b.fitness) ? 1 : 0;
+        });
+
+        for (let i = data.length - n; i < data.length; i++) {
+            ret.push(data[i]);
+        }
+    }
+
+    return ret;
+}
