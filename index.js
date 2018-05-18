@@ -426,7 +426,6 @@ function start() {
                 drawGraph(this.tRexes[0].brain.nnetwork.graph(500, 350), '.draw', false);
             }
 
-
             this.outerContainerEl.appendChild(this.containerEl);
 
             if (IS_MOBILE) {
@@ -2635,6 +2634,7 @@ function start() {
                 document.getElementById("generation").innerHTML = "Generacja: " + generation + "<br>";
                 document.getElementById("alive").innerHTML = "Żywe t-Rexy: " + game.tRexes.length + "<br>";
 
+                
                 //skok
                 if (output[0] < 0.5) {
                     if (!game.tRexes[i].jumping && !game.tRexes[i].ducking) {
