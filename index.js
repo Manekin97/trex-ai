@@ -4,6 +4,7 @@
 var game;
 var generation = 1;
 var tRexPath;
+var best;
 
 AI_config = {
     INPUTS: 7,
@@ -606,14 +607,13 @@ function start() {
 
                 // Check for collisions.
                 for (let i = this.tRexes.length - 1; i >= 0; i--) {
-                    var collision = hasObstacles &&
-                        checkForCollision(this.horizon.obstacles[0], this.tRexes[i]);
+                    var collision = hasObstacles && checkForCollision(this.horizon.obstacles[0], this.tRexes[i]);
                     this.tRexes[i].fitness = this.distanceMeter.getActualDistance(Math.ceil(this.distanceRan));
 
                     if (collision) {
                         this.deadTrexes.push(this.tRexes.splice(i, 1)[0]);
                         if (this.tRexes.length <= 0) {
-                            this.gameOver();    //zmienić tu
+                            this.gameOver();
                             break;
                         }
                     }
@@ -738,7 +738,7 @@ function start() {
                 if (!this.crashed && (Runner.keycodes.JUMP[e.keyCode] ||
                     e.type == Runner.events.TOUCHSTART)) {
                     if (!this.playing) {
-                        this.loadSounds();
+                        // this.loadSounds();
                         this.playing = true;
                         this.update();
                         if (window.errorPageController) {
@@ -862,8 +862,9 @@ function start() {
                 this.tRexes[i].brain = new Brain(AI_config.INPUTS, AI_config.HIDDEN_LAYERS, AI_config.OUTPUTS);
             }
 
+            NormalizeFitness();
+
             let max = -1;
-            let best;
             this.deadTrexes.forEach(tRex => {
                 if (tRex.fitness > max) {
                     max = tRex.fitness;
@@ -872,12 +873,7 @@ function start() {
             });
 
             for (let i = 0; i < this.tRexes.length; i++) {
-                this.tRexes[i].brain.nnetwork = neataptic.Network.crossOver(best.brain.nnetwork, best.brain.nnetwork);
-
-                let rand = Math.random();
-                if (rand < AI_config.MUTATION_RATE) {
-                    this.tRexes[i].brain.nnetwork.mutate(neataptic.methods.mutation.MOD_WEIGHT);
-                }
+                Breed(this.tRexes[i]);
             }
 
             this.deadTrexes = [];
@@ -923,7 +919,7 @@ function start() {
                 this.tRexes.forEach(tRex => {
                     tRex.reset();
                 });
-                this.playSound(this.soundFx.BUTTON_PRESS);
+                // this.playSound(this.soundFx.BUTTON_PRESS);
                 this.invert(true);
                 this.update();
             }
@@ -2634,11 +2630,11 @@ function start() {
                 document.getElementById("generation").innerHTML = "Generacja: " + generation + "<br>";
                 document.getElementById("alive").innerHTML = "Żywe t-Rexy: " + game.tRexes.length + "<br>";
 
-                
+
                 //skok
                 if (output[0] < 0.5) {
                     if (!game.tRexes[i].jumping && !game.tRexes[i].ducking) {
-                        game.playSound(game.soundFx.BUTTON_PRESS);
+                        // game.playSound(game.soundFx.BUTTON_PRESS);
                         game.tRexes[i].startJump(game.currentSpeed);
                     }
                 }

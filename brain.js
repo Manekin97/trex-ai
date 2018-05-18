@@ -1,18 +1,6 @@
 class Brain {
     constructor(inputs, hiddenLayers, outputs) {
-        // this.nnetwork = new neataptic.architect.Perceptron(inputs, 10, outputs);
-        hiddenLayers.unshift(inputs);
-        hiddenLayers.push(outputs);
-
-        function construct(constructor, args) {
-            function Foo() {
-                return constructor.apply(this, args);
-            }
-            Foo.prototype = constructor.prototype;
-            return new Foo();
-        }
-
-        this.nnetwork = construct(neataptic.architect.Perceptron, hiddenLayers);
+        this.nnetwork = new neataptic.architect.Perceptron(inputs, 10, outputs);
     }
 
     Save(filename) {
@@ -37,14 +25,58 @@ class Brain {
     }
 }
 
-function NormalizeFitness(tRexes) {
+function SaveBest(filename) {
+    if (best) {
+        best.Save(filename);
+    }
+    else {
+        alert("Najlepszy T-Rex jeszcze nie istnieje.");
+    }
+}
+
+function NormalizeFitness() {
     let sum = 0;
 
-    tRexes.forEach(tRex => {
+    game.deadTrexes.forEach(tRex => {
         sum += tRex.fitness;
     });
 
-    tRexes.forEach(tRex => {
+    game.deadTrexes.forEach(tRex => {
         tRex.fitness /= sum;
     });
 }
+
+function SelectParent(tRexes) {
+    let index = 0;
+    let rnd = Math.random();
+
+    while (rnd > 0) {
+        rnd -= tRexes[index].fitness;
+        index++;
+    }
+
+    return $.extend(tRexes[--index]);
+}
+
+function Mutate(tRex) {
+    let rnd = Math.random();
+
+    if (rnd < AI_config.MUTATION_RATE) {
+        tRex.brain.nnetwork.mutate(neataptic.methods.mutation.MOD_WEIGHT);
+    }
+}
+
+function CrossOver(tRex) {
+    let parentA = SelectParent(game.deadTrexes);
+    let parentB = SelectParent(game.deadTrexes);
+
+    tRex.brain.nnetwork = neataptic.Network.crossOver(parentA.brain.nnetwork, parentB.brain.nnetwork);
+    Mutate(tRex);
+}
+
+function Breed(tRex) {
+    CrossOver(tRex);
+    Mutate(tRex);
+}
+
+// function Find
