@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 var game;
 var generation = 1;
-var tRexPath;
 var best;
 
 AI_config = {
@@ -858,14 +857,20 @@ function start() {
             }
 
             // AI Stuff
-            // this.tRexes = new Array(AI_config.POPULATION_SIZE);
             this.tRexes = [];
-            for (let i = 0; i < AI_config.POPULATION_SIZE; i++) {
+            let saved = [];
+
+            if (AI_config.ELITISM && AI_config.ELITISM_SIZE < AI_config.POPULATION_SIZE) {
+                saved = FindNBest(AI_config.ELITISM_SIZE);
+                for (let i = 0; i < saved.length; i++) {
+                    this.tRexes.push(saved[i]);
+                }
+            }
+            
+            for (let i = 0; i < AI_config.POPULATION_SIZE - saved.length; i++) {
                 let tRex = new Trex(game.canvas, game.spriteDef.TREX);
                 tRex.brain = new Brain(AI_config.INPUTS, AI_config.HIDDEN_LAYERS, AI_config.OUTPUTS);
                 this.tRexes.push(tRex);
-                // this.tRexes[i] = new Trex(game.canvas, game.spriteDef.TREX);
-                // this.tRexes[i].brain = new Brain(AI_config.INPUTS, AI_config.HIDDEN_LAYERS, AI_config.OUTPUTS);
             }
 
             NormalizeFitness();
@@ -878,20 +883,13 @@ function start() {
                 }
             }
 
-            let saved = [];
-            if (AI_config.ELITISM && AI_config.ELITISM_SIZE < AI_config.POPULATION_SIZE) {
-                saved = FindNBest(AI_config.ELITISM_SIZE);
-                for (let i = 0; i < saved.length; i++) {
-                    this.tRexes.push(saved[i]);
-                }
-            }
-
             for (let i = saved.length; i < AI_config.POPULATION_SIZE; i++) {
                 Breed(this.tRexes[i]);
             }
 
             this.deadTrexes = [];
             generation++;
+            // CreateNewPopulation();
 
             // Reset the time clock.
             this.time = getTimeStamp();

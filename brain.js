@@ -1,6 +1,7 @@
 class Brain {
     constructor(inputs, hiddenLayers, outputs) {
-        this.nnetwork = new neataptic.architect.Perceptron(inputs, 10, outputs);
+        // this.nnetwork = new neataptic.architect.Perceptron(inputs, 10, outputs);
+        this.nnetwork = new neataptic.architect.Perceptron(inputs, ...hiddenLayers, outputs);
     }
 
     Save(filename) {
@@ -99,4 +100,42 @@ function FindNBest(n) {
     }
 
     return ret;
+}
+
+function CreateNewPopulation() {
+    game.tRexes = [];
+    let saved = [];
+
+    if (AI_config.ELITISM && AI_config.ELITISM_SIZE < AI_config.POPULATION_SIZE) {
+        saved = FindNBest(AI_config.ELITISM_SIZE);
+        for (let i = 0; i < saved.length; i++) {
+            game.tRexes.push(saved[i]);
+        }
+    }
+
+    for (let i = 0; i < AI_config.POPULATION_SIZE - saved.length; i++) {
+        let tRex = new Trex(game.canvas, game.spriteDef.TREX);
+        tRex.brain = new Brain(AI_config.INPUTS, AI_config.HIDDEN_LAYERS, AI_config.OUTPUTS);
+        game.tRexes.push(tRex);
+    }
+
+    NormalizeFitness();
+
+    let max = -1;
+    for (let i = 0; i < game.deadTrexes.length; i++) {
+        if (game.deadTrexes[i].fitness > max) {
+            max = game.deadTrexes[i].fitness;
+            best = game.deadTrexes[i];
+        }
+    }
+    console.log(best)
+    best = FindNBest(1)[0];
+    console.log(best)    
+
+    for (let i = saved.length; i < AI_config.POPULATION_SIZE; i++) {
+        Breed(game.tRexes[i]);
+    }
+
+    game.deadTrexes = [];
+    generation++;
 }
