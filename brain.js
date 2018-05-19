@@ -1,6 +1,5 @@
 class Brain {
     constructor(inputs, hiddenLayers, outputs) {
-        // this.nnetwork = new neataptic.architect.Perceptron(inputs, 10, outputs);
         this.nnetwork = new neataptic.architect.Perceptron(inputs, ...hiddenLayers, outputs);
     }
 
@@ -73,7 +72,6 @@ function CrossOver(tRex) {
     let parentB = SelectParent(game.deadTrexes);
 
     tRex.brain.nnetwork = neataptic.Network.crossOver(parentA.brain.nnetwork, parentB.brain.nnetwork);
-    Mutate(tRex);
 }
 
 function Breed(tRex) {
