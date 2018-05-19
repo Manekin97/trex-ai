@@ -31,7 +31,7 @@
     <div class="container-fluid">
         <div class="row" style="text-align: center;">
             <div class="col">
-                <h1>
+                <h1 class="display-3">
                     T-Rex AI
                 </h1>
             </div>
@@ -40,67 +40,74 @@
         <div class="row">
             <div class="col-3">
                 <div class="card AIform">
-                    <div class="row">
-                        <div class="col">
-                            <form>
-                                <div class="form-group">
-                                    <div class="input-group">
-                                        <div class="custom-file">
-                                            <input type="file" class="custom-file-input" id="tRexLoad" onchange="$('#tRexLoadLab').html(this.files[0].name)">
-                                            <label class="custom-file-label" for="tRexLoad" id="tRexLoadLab">Wybierz T-Rexa</label>
+                    <div class="card-header" style="text-align:center;">
+                        <h5 class="display-4 m-0">
+                            Ustawienia AI
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col">
+                                <form>
+                                    <div class="form-group">
+                                        <div class="input-group">
+                                            <div class="custom-file">
+                                                <input type="file" class="custom-file-input" id="tRexLoad" onchange="$('#tRexLoadLab').html(this.files[0].name)">
+                                                <label class="custom-file-label" for="tRexLoad" id="tRexLoadLab">Wybierz T-Rexa</label>
+                                            </div>
+                                        </div>
+                                        <small class="form-text text-muted">Pozostaw puste, aby rozpocząć naukę od początku</small>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class="col-sm-6 col-form-label" for="popSize">Rozmiar populacji:</label>
+                                        <div class="col-sm-6">
+                                            <input type="number" class="form-control form-control" id="popSize" min="1" max="1000" value="1">
                                         </div>
                                     </div>
-                                    <small class="form-text text-muted">Pozostaw puste, aby rozpocząć naukę od początku</small>
-                                </div>
 
-                                <div class="form-group row">
-                                    <label class="col-sm-6 col-form-label" for="popSize">Rozmiar populacji:</label>
-                                    <div class="col-sm-6">
-                                        <input type="number" class="form-control form-control" id="popSize" min="1" max="1000" value="1">
+                                    <div class="form-group row">
+                                        <label class="col-sm-6 col-form-label" for="hiddenLayers">Ukryte warstwy:</label>
+                                        <div class="col-sm-6">
+                                            <input type="text" class="form-control form-control" id="hiddenLayers" value="10">
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="form-group row">
-                                    <label class="col-sm-6 col-form-label" for="hiddenLayers">Ukryte warstwy:</label>
-                                    <div class="col-sm-6">
-                                        <input type="text" class="form-control form-control" id="hiddenLayers" value="10">
+                                    <div class="form-group row">
+                                        <label class="col-sm-6 col-form-label" for="mutRate">Częstość mutacji:</label>
+                                        <div class="col-sm-6">
+                                            <input type="number" class="form-control form-control" id="mutRate" min="0" max="1" step="0.01" value="0.5">
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="form-group row">
-                                    <label class="col-sm-6 col-form-label" for="mutRate">Częstość mutacji:</label>
-                                    <div class="col-sm-6">
-                                        <input type="number" class="form-control form-control" id="mutRate" min="0" max="1" step="0.01" value="0.5">
+                                    <div class="form-group row">
+                                        <label class="col-sm-6 col-form-label" for="mutRate">Wartość elitaryzmu:</label>
+                                        <div class="col-sm-6">
+                                            <input type="number" class="form-control form-control" id="elitSize" min="0" max="100" step="1" value="10">
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="form-group row">
-                                    <label class="col-sm-6 col-form-label" for="mutRate">Wartość elitaryzmu:</label>
-                                    <div class="col-sm-6">
-                                        <input type="number" class="form-control form-control" id="elitSize" min="0" max="100" step="1" value="10">
+                                    <div class="form-group">
+                                        <div class="custom-control custom-checkbox custom-control-inline">
+                                            <input type="checkbox" id="normInput" class="custom-control-input">
+                                            <label class="custom-control-label" for="normInput">Normalizacja danych</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox custom-control-inline">
+                                            <input type="checkbox" id="elitism" class="custom-control-input" onchange="$('#elitSize').attr('disabled', !($('#elitSize').prop('disabled')));"
+                                                checked>
+                                            <label class="custom-control-label" for="elitism">Elitaryzm</label>
+                                        </div>
                                     </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <div class="custom-control custom-checkbox custom-control-inline">
-                                        <input type="checkbox" id="normInput" class="custom-control-input">
-                                        <label class="custom-control-label" for="normInput">Normalizacja danych</label>
-                                    </div>
-                                    <div class="custom-control custom-checkbox custom-control-inline">
-                                        <input type="checkbox" id="elitism" class="custom-control-input" onchange="$('#elitSize').attr('disabled', !($('#elitSize').prop('disabled')));"
-                                            checked>
-                                        <label class="custom-control-label" for="elitism">Elitaryzm</label>
-                                    </div>
-                                </div>
-                            </form>
+                                </form>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="col">
-                            <button type="button" class="btn btn-default" id="AIformBtn" onclick="start();">
-                                Zatwierdź
-                            </button>
+                        <div class="row">
+                            <div class="col">
+                                <button type="button" class="btn btn-default" id="AIformBtn" onclick="start();">
+                                    Zatwierdź
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -109,7 +116,7 @@
             <div class="col-6">
                 <div class="row">
                     <div class="col">
-                        <div class="card">
+                        <div class="card game">
                             <div class="container-fluid">
                                 <div class="row">
                                     <div class="col">
@@ -130,22 +137,20 @@
                                     </div>
                                 </div>
 
-                                <div class="row">
+                                <div class="row" style="text-align:center">
                                     <div class="col">
-                                        <h5 id="alive"></h5>
+                                        <h4 id="generation">Generacja: ---</h4>
                                     </div>
 
                                     <div class="col">
-                                        <h5 id="generation"></h5>
+                                        <h4 id="alive">Żywe T-Rexy: ---</h4>
                                     </div>
 
                                     <div class="col">
-                                        <div class="float-right">
-                                            <button class="btn btn-default" onclick="game.SaveNetwork(best, 'SavedTrex')">
-                                                <i class="fas fa-save mr-1"></i>
-                                                Zapisz
-                                            </button>
-                                        </div>
+                                        <button class="btn btn-default" onclick="game.SaveNetwork(best, 'SavedTrex')">
+                                            <i class="fas fa-save mr-1"></i>
+                                            Zapisz
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -166,12 +171,10 @@
 
             <div class="col-3">
                 <div class="card">
-                    <div class="row px-0 mg-0">
-                        <div class="col px-0 mg-0" style="text-align: center" id="info">
-                            <h3 id="output1"></h3>
-                            <h3 id="output2"></h3>
-                            <h3 id="distanceRan"></h3>
-                        </div>
+                    <div class="card-header" style="text-align:center;">
+                        <h5 class="display-4 m-0">
+                            Poziom Trudności
+                        </h5>
                     </div>
                     <div class="card-body">
                         <form>

@@ -102,40 +102,49 @@ function FindNBest(n) {
     return ret;
 }
 
-function CreateNewPopulation() {
-    game.tRexes = [];
-    let saved = [];
+function MakeADecision(tRex) {
+    let input = [];
+    let output = [];
 
-    if (AI_config.ELITISM && AI_config.ELITISM_SIZE < AI_config.POPULATION_SIZE) {
-        saved = FindNBest(AI_config.ELITISM_SIZE);
-        for (let i = 0; i < saved.length; i++) {
-            game.tRexes.push(saved[i]);
+    let closestObstacle = tRex.getClosestObstacle();
+
+    if (AI_config.NORMALIZE_DATA) {
+        input = [
+            closestObstacle.dist / game.dimensions.WIDTH,   //  Dystans do najbliższej przeszkody
+            typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height / 200 : 0,    //  Wysokość najbliższej przeszkody
+            typeof closestObstacle.obstacle.typeConfig !== "undefined" ? (closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size) / 200 : 0, //  Szerokość najbliższej przeszkody
+            typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height / 100 : 0,   //  Pozycja Y Pterodaktyla
+            game.currentSpeed / game.config.MAX_SPEED,  //  Prędkość T-rexa
+            tRex.yPos / game.dimensions.HEIGHT,   //  Pozycja Y T-rexa
+            tRex.getDistanceBetweenObstacles(closestObstacle.obstacle) / game.dimensions.WIDTH    //  Odległość między przeszkodami
+        ];
+    }
+    else {
+        input = [
+            closestObstacle.dist,   //  Dystans do najbliższej przeszkody
+            typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0,    //  Wysokość najbliższej przeszkody
+            typeof closestObstacle.obstacle.typeConfig !== "undefined" ? (closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size) : 0,   //  Szerokość najbliższej przeszkody
+            typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0,   //  Pozycja Y Pterodaktyla
+            game.currentSpeed,  //  Prędkość T-rexa
+            tRex.yPos,    //  Pozycja Y T-rexa
+            tRex.getDistanceBetweenObstacles(closestObstacle.obstacle)    //  Odległość między przeszkodami
+        ];
+    }
+
+    output = tRex.brain.nnetwork.noTraceActivate(input);
+
+    //skok
+    if (output[0] < 0.5) {
+        if (!tRex.jumping && !tRex.ducking) {
+            tRex.startJump(game.currentSpeed);
         }
     }
-
-    for (let i = 0; i < AI_config.POPULATION_SIZE - saved.length; i++) {
-        let tRex = new Trex(game.canvas, game.spriteDef.TREX);
-        tRex.brain = new Brain(AI_config.INPUTS, AI_config.HIDDEN_LAYERS, AI_config.OUTPUTS);
-        game.tRexes.push(tRex);
-    }
-
-    NormalizeFitness();
-
-    let max = -1;
-    for (let i = 0; i < game.deadTrexes.length; i++) {
-        if (game.deadTrexes[i].fitness > max) {
-            max = game.deadTrexes[i].fitness;
-            best = game.deadTrexes[i];
+    // duck
+    else if (output[1] < 0.5) {
+        if (tRex.jumping) {
+            tRex.setSpeedDrop();
+        } else if (!tRex.jumping && !tRex.ducking) {
+            tRex.setDuck(true);
         }
     }
-    console.log(best)
-    best = FindNBest(1)[0];
-    console.log(best)    
-
-    for (let i = saved.length; i < AI_config.POPULATION_SIZE; i++) {
-        Breed(game.tRexes[i]);
-    }
-
-    game.deadTrexes = [];
-    generation++;
 }
