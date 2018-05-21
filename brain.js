@@ -169,7 +169,7 @@ function DrawChart(tRex) {
             title: "Waga"
         },
         data: [{
-            type: "column",
+            type: "pie",
             labelFontSize: 10,
             showInLegend: false,
             dataPoints: [
