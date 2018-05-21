@@ -29,7 +29,15 @@ function start() {
     AI_config.USE_LOADED_MODEL = document.getElementById("tRexLoad").value ? true : false;
 
     game = new Runner('.interstitial-wrapper');
+    console.log(game);
 }
+
+function SetGameSettings() {
+    Runner.config.ACCELERATION = document.getElementById("accelerationInput").value || Runner.config.ACCELERATION;
+    Runner.config.SPEED = document.getElementById("speedInput").value || Runner.config.SPEED;
+    Runner.config.MAX_SPEED = document.getElementById("maxSpeedInput").value || Runner.config.MAX_SPEED;
+}
+
 
 (function () {
     'use strict';
@@ -40,41 +48,41 @@ function start() {
      * @constructor
      * @export
      */
-    
+
     function Runner(outerContainerId, opt_config) {
         // Singleton
         if (Runner.instance_) {
             return Runner.instance_;
         }
         Runner.instance_ = this;
-
+        
         this.outerContainerEl = document.querySelector(outerContainerId);
         this.containerEl = null;
         this.snackbarEl = null;
         this.detailsButton = this.outerContainerEl.querySelector('#details-button');
-
+        
         this.config = opt_config || Runner.config;
-
+        
         this.dimensions = Runner.defaultDimensions;
-
+        
         this.canvas = null;
         this.canvasCtx = null;
-
+        
         this.tRexes = [];
         this.deadTrexes = [];
-
+        
         this.distanceMeter = null;
         this.distanceRan = 0;
-
+        
         this.highestScore = 0;
-
+        
         this.time = 0;
         this.runningTime = 0;
         this.msPerFrame = 1000 / FPS;
         this.currentSpeed = this.config.SPEED;
-
+        
         this.obstacles = [];
-
+        
         this.activated = false; // Whether the easter egg has been activated.
         this.playing = false; // Whether the game is currently in play state.
         this.crashed = false;
@@ -82,20 +90,20 @@ function start() {
         this.inverted = false;
         this.invertTimer = 0;
         this.resizeTimerId_ = null;
-
+        
         this.playCount = 0;
-
+        
         // Sound FX.
         this.audioBuffer = null;
         this.soundFx = {};
-
+        
         // Global web audio context for playing sounds.
         this.audioContext = null;
-
+        
         // Images.
         this.images = {};
         this.imagesLoaded = 0;
-
+        
         if (this.isDisabled()) {
             this.setupDisabledRunner();
         } else {
@@ -103,32 +111,32 @@ function start() {
         }
     }
     window['Runner'] = Runner;
-
+    
 
     /**
      * Default game width.
      * @const
      */
     var DEFAULT_WIDTH = 600;
-
+    
     /**
      * Frames per second.
      * @const
      */
     var FPS = 60;
-
+    
     /** @const */
     var IS_HIDPI = window.devicePixelRatio > 1;
-
+    
     /** @const */
     var IS_IOS = /iPad|iPhone|iPod/.test(window.navigator.platform);
-
+    
     /** @const */
     var IS_MOBILE = /Android/.test(window.navigator.userAgent) || IS_IOS;
-
+    
     /** @const */
     var IS_TOUCH_ENABLED = 'ontouchstart' in window;
-
+    
     /**
      * Default game configuration.
      * @enum {number}
@@ -429,7 +437,8 @@ function start() {
                 this.LoadNetwork("./SavedTrexes/" + AI_config.LOADED_MODEL_NAME.substr(AI_config.LOADED_MODEL_NAME.lastIndexOf('\\') + 1));
             }
 
-            drawGraph(this.tRexes[0].brain.nnetwork.graph(500, 350), '.draw', false);
+            drawGraph(this.tRexes[0].brain.nnetwork.graph(500, 350), '.draw');
+            DrawChart(this.tRexes[0]);
 
             this.outerContainerEl.appendChild(this.containerEl);
 
@@ -864,6 +873,7 @@ function start() {
 
             game.deadTrexes = [];
             generation++;
+            DrawChart(best);
         },
 
         /**

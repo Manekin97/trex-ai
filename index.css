@@ -34,18 +34,28 @@ html, body {
   font-size: 200%;
 }
 
-.draw {
+/* .draw {
   position: absolute;
   right: 150px;
+} */
+
+.draw{
+  display: block;
+  margin: auto;
 }
 
 .footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 60px;
-  line-height: 60px;
+  line-height: 60px; 
   background-color: #F7F7F7;
+  height: 60px;
+  width: 100%;
+  background-image: none;
+  background-repeat: repeat;
+  background-attachment: scroll;
+  background-position: 0% 0%;
+  position: fixed;
+  bottom: 0pt;
+  left: 0pt;
 }
 
 /* Offline page */

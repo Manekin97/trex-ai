@@ -4,6 +4,7 @@ class Brain {
     }
 
     Save(filename) {
+        console.log(best);
         let network = JSON.stringify(this.nnetwork.toJSON());
         let element = document.createElement('a');
         element.setAttribute('href', URL.createObjectURL(new Blob([network], { type: "application/json" })));
@@ -111,7 +112,7 @@ function MakeADecision(tRex) {
             closestObstacle.dist / game.dimensions.WIDTH,   //  Dystans do najbliższej przeszkody
             typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height / 200 : 0,    //  Wysokość najbliższej przeszkody
             typeof closestObstacle.obstacle.typeConfig !== "undefined" ? (closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size) / 200 : 0, //  Szerokość najbliższej przeszkody
-            typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height / 100 : 0,   //  Pozycja Y Pterodaktyla
+            typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.yPos / 100 : 0,   //  Pozycja Y Pterodaktyla
             game.currentSpeed / game.config.MAX_SPEED,  //  Prędkość T-rexa
             tRex.yPos / game.dimensions.HEIGHT,   //  Pozycja Y T-rexa
             tRex.getDistanceBetweenObstacles(closestObstacle.obstacle) / game.dimensions.WIDTH    //  Odległość między przeszkodami
@@ -122,7 +123,7 @@ function MakeADecision(tRex) {
             closestObstacle.dist,   //  Dystans do najbliższej przeszkody
             typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0,    //  Wysokość najbliższej przeszkody
             typeof closestObstacle.obstacle.typeConfig !== "undefined" ? (closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size) : 0,   //  Szerokość najbliższej przeszkody
-            typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.height : 0,   //  Pozycja Y Pterodaktyla
+            typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.yPos : 0,   //  Pozycja Y Pterodaktyla
             game.currentSpeed,  //  Prędkość T-rexa
             tRex.yPos,    //  Pozycja Y T-rexa
             tRex.getDistanceBetweenObstacles(closestObstacle.obstacle)    //  Odległość między przeszkodami
@@ -145,4 +146,44 @@ function MakeADecision(tRex) {
             tRex.setDuck(true);
         }
     }
+}
+
+function GetConnectionsAvg(connections) {
+    let sum = 0;
+
+    connections.forEach(connection => {
+        sum += Math.abs(connection.weight);
+    });
+
+    return sum / connections.length;
+}
+
+function DrawChart(tRex) {
+    let chart = new CanvasJS.Chart("chartContainer", {
+        animationEnabled: true,
+        theme: "light2", // "light1", "light2", "dark1", "dark2"
+        title: {
+            text: "Znaczenie inputów"
+        },
+        axisY: {
+            title: "Waga"
+        },
+        data: [{
+            type: "column",
+            labelFontSize: 10,
+            showInLegend: false,
+            dataPoints: [
+                { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[0].connections.out), label: "Dystans do przeszkody" },
+                { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[1].connections.out), label: "Wysokość przeszkody" },
+                { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[2].connections.out), label: "Szerokość przeszkody" },
+                { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[3].connections.out), label: "Pozycja Y T-Rexa Pterodaktyla" },
+                { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[4].connections.out), label: "Prędkość T-Rexa" },
+                { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[5].connections.out), label: "Pozycja Y T-Rexa" },
+                { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[6].connections.out), label: "Odległośc między przeszkodami" },
+            ]
+        }
+        ]
+    });
+
+    chart.render();
 }
