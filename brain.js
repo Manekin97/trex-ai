@@ -163,7 +163,7 @@ function DrawChart(tRex) {
         animationEnabled: true,
         theme: "light2", // "light1", "light2", "dark1", "dark2"
         title: {
-            text: "Znaczenie inputów"
+            text: "Znaczenie wejść"
         },
         axisY: {
             title: "Waga"
@@ -176,7 +176,7 @@ function DrawChart(tRex) {
                 { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[0].connections.out), label: "Dystans do przeszkody" },
                 { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[1].connections.out), label: "Wysokość przeszkody" },
                 { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[2].connections.out), label: "Szerokość przeszkody" },
-                { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[3].connections.out), label: "Pozycja Y T-Rexa Pterodaktyla" },
+                { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[3].connections.out), label: "Pozycja Y Pterodaktyla" },
                 { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[4].connections.out), label: "Prędkość T-Rexa" },
                 { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[5].connections.out), label: "Pozycja Y T-Rexa" },
                 { y: GetConnectionsAvg(tRex.brain.nnetwork.nodes[6].connections.out), label: "Odległośc między przeszkodami" },

@@ -437,7 +437,7 @@ function SetGameSettings() {
                 this.LoadNetwork("./SavedTrexes/" + AI_config.LOADED_MODEL_NAME.substr(AI_config.LOADED_MODEL_NAME.lastIndexOf('\\') + 1));
             }
 
-            drawGraph(this.tRexes[0].brain.nnetwork.graph(500, 350), '.draw');
+            drawGraph(this.tRexes[0].brain.nnetwork.graph(600, 400), '.draw');
             DrawChart(this.tRexes[0]);
 
             this.outerContainerEl.appendChild(this.containerEl);
@@ -2627,7 +2627,7 @@ function SetGameSettings() {
             this.draw();
 
             document.getElementById("generation").innerHTML = "Generacja: " + generation;
-            document.getElementById("alive").innerHTML = "Żywe T-Rexy: " + game.tRexes.length;
+            document.getElementById("alive").innerHTML = "Żywe T-Rexy: " + game.tRexes.length + "/" + AI_config.POPULATION_SIZE;
         },
 
         /**
