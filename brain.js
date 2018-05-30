@@ -4,7 +4,6 @@ class Brain {
     }
 
     Save(filename) {
-        console.log(best);
         let network = JSON.stringify(this.nnetwork.toJSON());
         let element = document.createElement('a');
         element.setAttribute('href', URL.createObjectURL(new Blob([network], { type: "application/json" })));
@@ -112,7 +111,7 @@ function MakeADecision(tRex) {
             closestObstacle.dist / game.dimensions.WIDTH,   //  Dystans do najbliższej przeszkody
             typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height / 200 : 0,    //  Wysokość najbliższej przeszkody
             typeof closestObstacle.obstacle.typeConfig !== "undefined" ? (closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size) / 200 : 0, //  Szerokość najbliższej przeszkody
-            typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.yPos / 100 : 0,   //  Pozycja Y Pterodaktyla
+            typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.yPos / 100 : 0,   //  Pozycja Y Pterodaktyla
             game.currentSpeed / game.config.MAX_SPEED,  //  Prędkość T-rexa
             tRex.yPos / game.dimensions.HEIGHT,   //  Pozycja Y T-rexa
             tRex.getDistanceBetweenObstacles(closestObstacle.obstacle) / game.dimensions.WIDTH    //  Odległość między przeszkodami
@@ -123,12 +122,14 @@ function MakeADecision(tRex) {
             closestObstacle.dist,   //  Dystans do najbliższej przeszkody
             typeof closestObstacle.obstacle.typeConfig !== "undefined" ? closestObstacle.obstacle.typeConfig.height : 0,    //  Wysokość najbliższej przeszkody
             typeof closestObstacle.obstacle.typeConfig !== "undefined" ? (closestObstacle.obstacle.typeConfig.width * closestObstacle.obstacle.size) : 0,   //  Szerokość najbliższej przeszkody
-            typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.typeConfig.yPos : 0,   //  Pozycja Y Pterodaktyla
+            typeof closestObstacle.obstacle.typeConfig !== "undefined" && closestObstacle.obstacle.typeConfig.type == 'PTERODACTYL' ? closestObstacle.obstacle.yPos : 0,   //  Pozycja Y Pterodaktyla
             game.currentSpeed,  //  Prędkość T-rexa
             tRex.yPos,    //  Pozycja Y T-rexa
             tRex.getDistanceBetweenObstacles(closestObstacle.obstacle)    //  Odległość między przeszkodami
         ];
     }
+
+    // console.log(closestObstacle.obstacle.typeConfig.width);
 
     output = tRex.brain.nnetwork.noTraceActivate(input);
 
@@ -183,6 +184,30 @@ function DrawChart(tRex) {
             ]
         }
         ]
+    });
+
+    chart.render();
+}
+
+function DrawProgressChart(dataArray) {
+    let data = [];
+    dataArray.forEach((value, i) => {
+        data.push({ x: i, y: value.fitness });
+    });
+
+    let chart = new CanvasJS.Chart("linechart", {
+        animationEnabled: true,
+        theme: "light2",
+        title: {
+            text: "Postęp nauki"
+        },
+        axisY: {
+            includeZero: false
+        },
+        data: [{
+            type: "line",
+            dataPoints: data
+        }]
     });
 
     chart.render();

@@ -4,6 +4,7 @@
 var game;
 var generation = 1;
 var best;
+var bestArray = [];
 
 AI_config = {
     INPUTS: 7,
@@ -29,7 +30,6 @@ function start() {
     AI_config.USE_LOADED_MODEL = document.getElementById("tRexLoad").value ? true : false;
 
     game = new Runner('.interstitial-wrapper');
-    console.log(game);
 }
 
 function SetGameSettings() {
@@ -433,12 +433,13 @@ function SetGameSettings() {
                 this.tRexes.push(new Trex(this.canvas, this.spriteDef.TREX));
             }
 
-            if (AI_config.USE_LOADED_MODEL) {
+            if (AI_config.USE_LOADED_MODEL && generation < 2) {
                 this.LoadNetwork("./SavedTrexes/" + AI_config.LOADED_MODEL_NAME.substr(AI_config.LOADED_MODEL_NAME.lastIndexOf('\\') + 1));
             }
 
             drawGraph(this.tRexes[0].brain.nnetwork.graph(600, 400), '.draw');
             DrawChart(this.tRexes[0]);
+            DrawProgressChart(bestArray);
 
             this.outerContainerEl.appendChild(this.containerEl);
 
@@ -850,7 +851,7 @@ function SetGameSettings() {
             game.tRexes = [];
             let saved = [];
 
-            if (AI_config.ELITISM && AI_config.ELITISM_SIZE < AI_config.POPULATION_SIZE) {
+            if (AI_config.ELITISM) {
                 saved = FindNBest(AI_config.ELITISM_SIZE);
                 for (let i = 0; i < saved.length; i++) {
                     game.tRexes.push(saved[i]);
@@ -866,14 +867,19 @@ function SetGameSettings() {
             NormalizeFitness();
 
             best = FindNBest(1)[0];
+            bestArray.push(best);
 
             for (let i = saved.length; i < AI_config.POPULATION_SIZE; i++) {
                 Breed(game.tRexes[i]);
             }
 
+            best = FindNBest(1)[0];
+            bestArray.push(best);
+
             game.deadTrexes = [];
             generation++;
             DrawChart(best);
+            DrawProgressChart(bestArray);
         },
 
         /**
