@@ -20,12 +20,12 @@ AI_config = {
 };
 
 function start() {
-    AI_config.POPULATION_SIZE = document.getElementById("popSize").value || AI_config.POPULATION_SIZE;
-    AI_config.HIDDEN_LAYERS = document.getElementById("hiddenLayers").value.split(",").map(item => item.trim()) || AI_config.HIDDEN_LAYERS;
-    AI_config.MUTATION_RATE = document.getElementById("mutRate").value || AI_config.MUTATION_RATE;
+    AI_config.POPULATION_SIZE = parseInt(document.getElementById("popSize").value) || AI_config.POPULATION_SIZE;
+    AI_config.HIDDEN_LAYERS = document.getElementById("hiddenLayers").value.split(",").map(item => parseInt(item.trim())) || AI_config.HIDDEN_LAYERS;
+    AI_config.MUTATION_RATE = parseFloat(document.getElementById("mutRate").value) || AI_config.MUTATION_RATE;
     AI_config.NORMALIZE_DATA = document.getElementById("normInput").checked || AI_config.NORMALIZE_DATA;
     AI_config.ELITISM = document.getElementById("elitism").checked || AI_config.ELITISM;
-    AI_config.ELITISM_SIZE = document.getElementById("elitSize").disabled ? AI_config.ELITISM_SIZE : document.getElementById("elitSize").value || AI_config.ELITISM_SIZE;
+    AI_config.ELITISM_SIZE = parseFloat(document.getElementById("elitSize").disabled ? AI_config.ELITISM_SIZE : document.getElementById("elitSize").value) || AI_config.ELITISM_SIZE;
     AI_config.LOADED_MODEL_NAME = document.getElementById("tRexLoad").value || AI_config.LOADED_MODEL_NAME;
     AI_config.USE_LOADED_MODEL = document.getElementById("tRexLoad").value ? true : false;
 
@@ -33,9 +33,11 @@ function start() {
 }
 
 function SetGameSettings() {
-    Runner.config.ACCELERATION = document.getElementById("accelerationInput").value || Runner.config.ACCELERATION;
-    Runner.config.SPEED = document.getElementById("speedInput").value || Runner.config.SPEED;
-    Runner.config.MAX_SPEED = document.getElementById("maxSpeedInput").value || Runner.config.MAX_SPEED;
+    Runner.config.ACCELERATION = parseFloat(document.getElementById("accelerationInput").value) || Runner.config.ACCELERATION;
+    Runner.config.SPEED = parseFloat(document.getElementById("speedInput").value) || Runner.config.SPEED;
+    Runner.config.MAX_SPEED = parseFloat(document.getElementById("maxSpeedInput").value) || Runner.config.MAX_SPEED;
+
+    console.log(Runner.config);
 }
 
 
@@ -55,34 +57,34 @@ function SetGameSettings() {
             return Runner.instance_;
         }
         Runner.instance_ = this;
-        
+
         this.outerContainerEl = document.querySelector(outerContainerId);
         this.containerEl = null;
         this.snackbarEl = null;
         this.detailsButton = this.outerContainerEl.querySelector('#details-button');
-        
+
         this.config = opt_config || Runner.config;
-        
+
         this.dimensions = Runner.defaultDimensions;
-        
+
         this.canvas = null;
         this.canvasCtx = null;
-        
+
         this.tRexes = [];
         this.deadTrexes = [];
-        
+
         this.distanceMeter = null;
         this.distanceRan = 0;
-        
+
         this.highestScore = 0;
-        
+
         this.time = 0;
         this.runningTime = 0;
         this.msPerFrame = 1000 / FPS;
         this.currentSpeed = this.config.SPEED;
-        
+
         this.obstacles = [];
-        
+
         this.activated = false; // Whether the easter egg has been activated.
         this.playing = false; // Whether the game is currently in play state.
         this.crashed = false;
@@ -90,20 +92,20 @@ function SetGameSettings() {
         this.inverted = false;
         this.invertTimer = 0;
         this.resizeTimerId_ = null;
-        
+
         this.playCount = 0;
-        
+
         // Sound FX.
         this.audioBuffer = null;
         this.soundFx = {};
-        
+
         // Global web audio context for playing sounds.
         this.audioContext = null;
-        
+
         // Images.
         this.images = {};
         this.imagesLoaded = 0;
-        
+
         if (this.isDisabled()) {
             this.setupDisabledRunner();
         } else {
@@ -111,32 +113,32 @@ function SetGameSettings() {
         }
     }
     window['Runner'] = Runner;
-    
+
 
     /**
      * Default game width.
      * @const
      */
     var DEFAULT_WIDTH = 600;
-    
+
     /**
      * Frames per second.
      * @const
      */
     var FPS = 60;
-    
+
     /** @const */
     var IS_HIDPI = window.devicePixelRatio > 1;
-    
+
     /** @const */
     var IS_IOS = /iPad|iPhone|iPod/.test(window.navigator.platform);
-    
+
     /** @const */
     var IS_MOBILE = /Android/.test(window.navigator.userAgent) || IS_IOS;
-    
+
     /** @const */
     var IS_TOUCH_ENABLED = 'ontouchstart' in window;
-    
+
     /**
      * Default game configuration.
      * @enum {number}
@@ -623,6 +625,7 @@ function SetGameSettings() {
                 for (let i = this.tRexes.length - 1; i >= 0; i--) {
                     var collision = hasObstacles && checkForCollision(this.horizon.obstacles[0], this.tRexes[i]);
                     this.tRexes[i].fitness = this.distanceMeter.getActualDistance(Math.ceil(this.distanceRan));
+                    this.tRexes[i].score = this.distanceMeter.getActualDistance(Math.ceil(this.distanceRan));
 
                     if (collision) {
                         this.deadTrexes.push(this.tRexes.splice(i, 1)[0]);
@@ -872,9 +875,6 @@ function SetGameSettings() {
             for (let i = saved.length; i < AI_config.POPULATION_SIZE; i++) {
                 Breed(game.tRexes[i]);
             }
-
-            best = FindNBest(1)[0];
-            bestArray.push(best);
 
             game.deadTrexes = [];
             generation++;
@@ -1635,6 +1635,7 @@ function SetGameSettings() {
         // AI stuff
         this.brain = null;
         this.fitness = 0;
+        this.score = 0;
 
         this.init();
     };

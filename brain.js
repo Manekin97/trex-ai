@@ -192,7 +192,7 @@ function DrawChart(tRex) {
 function DrawProgressChart(dataArray) {
     let data = [];
     dataArray.forEach((value, i) => {
-        data.push({ x: i, y: value.fitness });
+        data.push({ x: i, y: value.score });
     });
 
     let chart = new CanvasJS.Chart("linechart", {
